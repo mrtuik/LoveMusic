@@ -1,0 +1,64 @@
+name: LoveMusic APK
+
+# Push to main (or run manually) -> installable APK in the Actions "Artifacts" section.
+# SVG icons in svg-icons/ are converted to Android vector drawables automatically before the build.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "master"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build LoveMusic (debug-signed APK)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Convert SVG icons -> Android vector drawables
+        run: python3 tools/svg2vd.py
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build APK (FOSS, debug-signed so it installs directly)
+        run: ./gradlew --console=plain assembleFossDebug -x lint --warning-mode summary
+        env:
+          METROLIST_APP_NAME: LoveMusic
+          METROLIST_APPLICATION_ID: com.lovemusic.app
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+
+      - name: Collect APKs
+        run: |
+          mkdir -p out
+          find app/build/outputs/apk -name "*.apk" -exec cp {} out/ \;
+          ls -la out
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LoveMusic-apk
+          path: out/*.apk
