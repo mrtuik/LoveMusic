@@ -6,8 +6,12 @@ It talks to YouTube Music through the InnerTube API, so **no API key is needed**
 
 ## What's new in LoveMusic
 - New name, package (`com.lovemusic.app`) and launcher icon (heart + sound-wave)
-- New design system: plum-night / blush-day palettes, rounder shapes, bolder typography
-- Pill-style bottom navigation with rounded top corners
+- Your own logo as launcher icon (red chat-bubble + music note), adaptive + themed icon
+- **Glass + Aurora design**: drifting pink/violet aurora glow behind Home and the player, translucent glass surfaces
+- **Everything floats**: floating glass navigation pill, floating glass mini-player, rounded artwork with soft shadow
+- Reference-style player: waveform seek bar, big circular play button, minimal prev/next
+- Smaller, thinner icons everywhere (all UI icons are ~14% smaller)
+- Dynamic (album-art) theme is OFF by default so the LoveMusic pink palette shows; turn it on in Settings -> Appearance
 - Time-aware greeting card on Home with an animated heart
 - **SVG icon pipeline**: drop any `.svg` into `svg-icons/` and it becomes an Android icon automatically
 

@@ -218,9 +218,15 @@ def convert(svg_text, name="icon"):
 
     # honour a non-zero viewBox origin
     group_open = group_close = ""
-    if vx or vy:
-        group_open = f'    <group android:translateX="{f(-vx)}" android:translateY="{f(-vy)}">\n'
+    # Small-icon padding: UI icons (<=64 units, not logo art) are drawn ~14% smaller inside their box.
+    pad = 0.0
+    if not keep and max(vw, vh) <= 64 and root.attrib.get("data-nopad") != "1" and "data-size" not in root.attrib:
+        pad = 2.0
+    if vx or vy or pad:
+        group_open = f'    <group android:translateX="{f(-vx + pad)}" android:translateY="{f(-vy + pad)}">\n'
         group_close = "\n    </group>"
+        vw += 2 * pad
+        vh += 2 * pad
 
     xml = (
         '<?xml version="1.0" encoding="utf-8"?>\n'
