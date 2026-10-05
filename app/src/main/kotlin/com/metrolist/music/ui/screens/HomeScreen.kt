@@ -138,6 +138,7 @@ import com.metrolist.music.ui.component.AlbumGridItem
 import com.metrolist.music.ui.component.ArtistGridItem
 import com.metrolist.music.ui.component.ChipsRow
 import com.metrolist.music.ui.component.LoveGreetingHeader
+import com.metrolist.music.ui.component.LoveAuroraBackground
 import com.metrolist.music.ui.component.HideOnScrollFAB
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
@@ -1185,6 +1186,8 @@ fun HomeScreen(
                         },
                     )
                 }
+
+            LoveAuroraBackground(modifier = Modifier.fillMaxSize())
 
             LazyColumn(
                 state = lazylistState,

@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.player
 
+import androidx.compose.ui.draw.shadow
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -559,6 +560,7 @@ private fun ThumbnailItem(
         Box(
             modifier = Modifier
                 .size(dimensions.thumbnailSize)
+                .shadow(20.dp, RoundedCornerShape(dimensions.cornerRadius))
                 .clip(RoundedCornerShape(dimensions.cornerRadius))
         ) {
             if (hidePlayerThumbnail) {
