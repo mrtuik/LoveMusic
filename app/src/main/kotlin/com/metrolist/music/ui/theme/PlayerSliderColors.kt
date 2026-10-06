@@ -48,11 +48,11 @@ object PlayerSliderColors {
         }
         
         return SliderDefaults.colors(
-            activeTrackColor = activeColor,
-            activeTickColor = activeColor,
-            thumbColor = activeColor,
+            activeTrackColor = SpotifyGreen,
+            activeTickColor = SpotifyGreen,
+            thumbColor = Color.White,
             inactiveTrackColor = inactiveTrackColor,
-            disabledActiveTrackColor = activeColor,
+            disabledActiveTrackColor = SpotifyGreen,
             disabledInactiveTrackColor = inactiveTrackColor,
             disabledThumbColor = activeColor
         )

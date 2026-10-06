@@ -602,7 +602,7 @@ class MainActivity : FragmentActivity() {
         val isSystemInDarkTheme = isSystemInDarkTheme()
         val useDarkTheme =
             remember(darkTheme, isSystemInDarkTheme) {
-                if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+                true // LoveMusic is always black
             }
 
         LaunchedEffect(useDarkTheme) {

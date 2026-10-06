@@ -172,10 +172,10 @@ fun AppNavigationBar(
     val scheme = MaterialTheme.colorScheme
 
     // Floating glass pill: translucent surface + soft glow shadow + light-catching border.
-    val pillShape = RoundedCornerShape(8.dp)
+    val pillShape = RoundedCornerShape(0.dp)
     // LoveMusic black nav bar: pure black in light and dark theme.
     val glassColor = Color.Black
-    val borderColor = Color.White.copy(alpha = 0.20f)
+    val borderColor = Color.Transparent
     val selectedTint = Color.White
     val unselectedTint = Color.White.copy(alpha = 0.60f)
 
@@ -183,12 +183,10 @@ fun AppNavigationBar(
         Row(
             modifier =
                 Modifier
-                    .padding(horizontal = 22.dp)
-                    .padding(top = 6.dp)
                     .fillMaxWidth()
                     .height(if (slimNav) 52.dp else 62.dp)
                     .shadow(
-                        elevation = 18.dp,
+                        elevation = 0.dp,
                         shape = pillShape,
                         ambientColor = Color.Black,
                         spotColor = Color.Black,

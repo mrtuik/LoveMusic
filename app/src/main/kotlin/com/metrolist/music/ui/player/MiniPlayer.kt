@@ -141,7 +141,7 @@ class ProgressState(
 }
 
 /** Pure-black container used by the new mini player in every theme. */
-private val MiniPlayerBlack = Color(0xFF0A0A0A)
+private val MiniPlayerBlack = Color(0xFF121212)
 
 @Composable
 fun MiniPlayer(
@@ -743,7 +743,7 @@ private fun LegacyMiniPlayer(
             (600 / (1f + kotlin.math.exp(-(-11.44748 * swipeSensitivity + 9.04945)))).roundToInt()
         }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = MaterialTheme.colorScheme.tertiary
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -756,11 +756,7 @@ private fun LegacyMiniPlayer(
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .background(
-                    if (pureBlack && isSystemInDarkTheme()) {
-                        Color.Black
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainer
-                    },
+                    MaterialTheme.colorScheme.surfaceContainer,
                 ).clickable(
                     interactionSource = interactionSource,
                     indication = LocalIndication.current,
@@ -995,7 +991,7 @@ private fun LegacyMiniMediaInfo(
                     Icon(
                         painter = painterResource(R.drawable.info),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
+                        tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.align(Alignment.Center),
                     )
                 }

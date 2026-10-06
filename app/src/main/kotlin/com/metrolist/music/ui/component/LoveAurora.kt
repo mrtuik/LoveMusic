@@ -39,51 +39,5 @@ fun LoveAuroraBackground(
         ),
     intensity: Float = 1f,
 ) {
-    val transition = rememberInfiniteTransition(label = "love_aurora")
-    val a by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(16000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "aurora_a",
-    )
-    val b by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(tween(21000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "aurora_b",
-    )
-    val c by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(26000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "aurora_c",
-    )
-
-    val c1 = colors.getOrElse(0) { Color(0xFFFF4D8D) }
-    val c2 = colors.getOrElse(1) { Color(0xFF9B6BFF) }
-    val c3 = colors.getOrElse(2) { Color(0xFFFFB784) }
-    val strength = intensity.coerceIn(0f, 1f)
-
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val w = size.width
-        val h = size.height
-        val r = maxOf(w, h)
-
-        fun glow(color: Color, center: Offset, radius: Float, alpha: Float) {
-            drawCircle(
-                brush =
-                    Brush.radialGradient(
-                        colors = listOf(color.copy(alpha = alpha * strength), Color.Transparent),
-                        center = center,
-                        radius = radius,
-                    ),
-                radius = radius,
-                center = center,
-            )
-        }
-
-        glow(c1, Offset(w * (0.15f + 0.45f * a), h * (0.10f + 0.12f * b)), r * 0.70f, 0.42f)
-        glow(c2, Offset(w * (0.95f - 0.40f * b), h * (0.35f + 0.18f * c)), r * 0.62f, 0.34f)
-        glow(c3, Offset(w * (0.20f + 0.50f * c), h * (0.80f - 0.15f * a)), r * 0.58f, 0.24f)
-    }
+    // Spotify-style flat black: the animated purple/pink glow is intentionally disabled.
 }

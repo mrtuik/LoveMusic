@@ -32,82 +32,59 @@ import com.materialkolor.score.Score
 /** LoveMusic signature pink. Also the sentinel meaning "use the built-in LoveMusic palette". */
 val DefaultThemeColor = Color(0xFFFF4D8D)
 
-/** Hand-tuned LoveMusic palettes (plum night / blush day) used when no custom seed colour is chosen. */
+/** Spotify green. Used sparingly: play button, progress/slider, liked heart, playing indicator. */
+val SpotifyGreen = Color(0xFF1DB954)
+
+/** Flat Spotify-style black palette. No tonal tint, no Material You, no purple/pink. */
 val LoveDarkColorScheme = darkColorScheme(
-    primary = Color(0xFFFF7AA8),
-    onPrimary = Color(0xFF4A0A27),
-    primaryContainer = Color(0xFF6B1A3D),
-    onPrimaryContainer = Color(0xFFFFD9E5),
-    secondary = Color(0xFFCBB2F5),
-    onSecondary = Color(0xFF2E1A52),
-    secondaryContainer = Color(0xFF433069),
-    onSecondaryContainer = Color(0xFFE9DDFF),
-    tertiary = Color(0xFFFFB784),
-    onTertiary = Color(0xFF4A2500),
-    tertiaryContainer = Color(0xFF6A3A12),
-    onTertiaryContainer = Color(0xFFFFDCC2),
-    background = Color(0xFF120816),
-    onBackground = Color(0xFFF4E6F0),
-    surface = Color(0xFF120816),
-    onSurface = Color(0xFFF4E6F0),
-    surfaceVariant = Color(0xFF3F2E48),
-    onSurfaceVariant = Color(0xFFD3BDD0),
-    surfaceTint = Color(0xFFFF7AA8),
-    inverseSurface = Color(0xFFF4E6F0),
-    inverseOnSurface = Color(0xFF35243B),
-    inversePrimary = Color(0xFFB4275C),
-    outline = Color(0xFF9B8499),
-    outlineVariant = Color(0xFF4F3C57),
-    surfaceDim = Color(0xFF120816),
-    surfaceBright = Color(0xFF3A2849),
-    surfaceContainerLowest = Color(0xFF0E0511),
-    surfaceContainerLow = Color(0xFF1A0E20),
-    surfaceContainer = Color(0xFF20132A),
-    surfaceContainerHigh = Color(0xFF2A1B36),
-    surfaceContainerHighest = Color(0xFF352445),
+    primary = Color(0xFFFFFFFF),
+    onPrimary = Color(0xFF000000),
+    primaryContainer = Color(0xFF2A2A2A),
+    onPrimaryContainer = Color(0xFFFFFFFF),
+    secondary = Color(0xFFB3B3B3),
+    onSecondary = Color(0xFF000000),
+    secondaryContainer = Color(0xFFFFFFFF),
+    onSecondaryContainer = Color(0xFF000000),
+    tertiary = SpotifyGreen,
+    onTertiary = Color(0xFF000000),
+    tertiaryContainer = Color(0xFF242424),
+    onTertiaryContainer = Color(0xFFFFFFFF),
+    background = Color(0xFF000000),
+    onBackground = Color(0xFFFFFFFF),
+    surface = Color(0xFF000000),
+    onSurface = Color(0xFFFFFFFF),
+    surfaceVariant = Color(0xFF242424),
+    onSurfaceVariant = Color(0xFFB3B3B3),
+    surfaceTint = Color(0xFF000000),
+    inverseSurface = Color(0xFFFFFFFF),
+    inverseOnSurface = Color(0xFF000000),
+    inversePrimary = Color(0xFF000000),
+    error = Color(0xFFE5484D),
+    onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFF3A1214),
+    onErrorContainer = Color(0xFFFFB3B5),
+    outline = Color(0xFF6A6A6A),
+    outlineVariant = Color(0xFF2A2A2A),
+    scrim = Color(0xFF000000),
+    surfaceDim = Color(0xFF000000),
+    surfaceBright = Color(0xFF2A2A2A),
+    surfaceContainerLowest = Color(0xFF000000),
+    surfaceContainerLow = Color(0xFF0A0A0A),
+    surfaceContainer = Color(0xFF121212),
+    surfaceContainerHigh = Color(0xFF1A1A1A),
+    surfaceContainerHighest = Color(0xFF242424),
 )
 
-val LoveLightColorScheme = lightColorScheme(
-    primary = Color(0xFFB8174F),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFFFD9E4),
-    onPrimaryContainer = Color(0xFF3F0020),
-    secondary = Color(0xFF6B4F9A),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFEBDDFF),
-    onSecondaryContainer = Color(0xFF25104A),
-    tertiary = Color(0xFF8B4E1A),
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFFFDCC2),
-    onTertiaryContainer = Color(0xFF2F1500),
-    background = Color(0xFFFFF7FA),
-    onBackground = Color(0xFF26151F),
-    surface = Color(0xFFFFF7FA),
-    onSurface = Color(0xFF26151F),
-    surfaceVariant = Color(0xFFF4DCE6),
-    onSurfaceVariant = Color(0xFF52404B),
-    surfaceTint = Color(0xFFB8174F),
-    inverseSurface = Color(0xFF3B292F),
-    inverseOnSurface = Color(0xFFFFECF3),
-    inversePrimary = Color(0xFFFF7AA8),
-    outline = Color(0xFF85707B),
-    outlineVariant = Color(0xFFD7C0CB),
-    surfaceDim = Color(0xFFEBD6DF),
-    surfaceBright = Color(0xFFFFF7FA),
-    surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFFF0F5),
-    surfaceContainer = Color(0xFFFBE8F0),
-    surfaceContainerHigh = Color(0xFFF5DFEA),
-    surfaceContainerHighest = Color(0xFFEFD7E4),
-)
+/** Kept for source compatibility; the app is always black now. */
+val LoveLightColorScheme = LoveDarkColorScheme
 
 /** Spotify-like tight corners across cards, sheets and dialogs. */
 val LoveShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(12.dp),
-    large = RoundedCornerShape(12.dp),
-    extraLarge = RoundedCornerShape(16.dp),
+    small = RoundedCornerShape(6.dp),
+    medium = RoundedCornerShape(8.dp),
+    large = RoundedCornerShape(8.dp),
+    extraLarge = RoundedCornerShape(12.dp),
 )
 
 private val BaseTypography = Typography()
@@ -129,33 +106,15 @@ val LoveTypography = Typography(
 
 @Composable
 fun LoveMusicTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    pureBlack: Boolean = false,
+    darkTheme: Boolean = true,
+    pureBlack: Boolean = true,
     themeColor: Color = DefaultThemeColor,
     content: @Composable () -> Unit,
 ) {
-    // Default seed -> the hand-tuned LoveMusic palette. Any other seed (palette pick or album art) -> generated scheme.
-    val baseColorScheme = if (themeColor == DefaultThemeColor) {
-        if (darkTheme) LoveDarkColorScheme else LoveLightColorScheme
-    } else {
-        rememberDynamicColorScheme(
-            seedColor = themeColor,
-            isDark = darkTheme,
-            specVersion = ColorSpec.SpecVersion.SPEC_2025,
-            style = PaletteStyle.TonalSpot
-        )
-    }
-
-    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {
-        if (darkTheme && pureBlack) {
-            baseColorScheme.pureBlack(true)
-        } else {
-            baseColorScheme
-        }
-    }
-
+    // Always the flat black Spotify-style scheme: system theme, dynamic colour, album-art colour and
+    // the seed colour picker are intentionally ignored (parameters kept so call sites compile).
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = LoveDarkColorScheme,
         typography = LoveTypography,
         shapes = LoveShapes,
         content = content,
@@ -165,8 +124,8 @@ fun LoveMusicTheme(
 /** Kept so existing call sites keep compiling. */
 @Composable
 fun MetrolistTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    pureBlack: Boolean = false,
+    darkTheme: Boolean = true,
+    pureBlack: Boolean = true,
     themeColor: Color = DefaultThemeColor,
     content: @Composable () -> Unit,
 ) = LoveMusicTheme(darkTheme, pureBlack, themeColor, content)

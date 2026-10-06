@@ -267,7 +267,7 @@ fun ScrollScreen(navController: NavController) {
                             Icon(
                                 painter = painterResource(if (liked) R.drawable.favorite else R.drawable.favorite_border),
                                 contentDescription = null,
-                                tint = if (liked) Color(0xFFFF4D6D) else Color.White,
+                                tint = if (liked) Color(0xFF1DB954) else Color.White,
                                 modifier = Modifier.size(30.dp),
                             )
                         }

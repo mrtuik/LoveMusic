@@ -71,11 +71,7 @@ fun LoveGreetingHeader(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(colors.primaryContainer, colors.secondaryContainer),
-                    ),
-                )
+                .background(colors.surfaceContainer)
                 .padding(horizontal = 20.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -83,18 +79,18 @@ fun LoveGreetingHeader(modifier: Modifier = Modifier) {
             Text(
                 text = stringResource(greetingRes),
                 style = MaterialTheme.typography.titleLarge,
-                color = colors.onPrimaryContainer,
+                color = colors.onSurface,
             )
             Text(
                 text = stringResource(R.string.love_greeting_tagline),
                 style = MaterialTheme.typography.bodyMedium,
-                color = colors.onPrimaryContainer.copy(alpha = 0.75f),
+                color = colors.onSurfaceVariant,
             )
         }
         Icon(
             painter = painterResource(R.drawable.lm_heart_wave),
             contentDescription = null,
-            tint = colors.primary,
+            tint = colors.tertiary,
             modifier =
                 Modifier
                     .size(44.dp)
