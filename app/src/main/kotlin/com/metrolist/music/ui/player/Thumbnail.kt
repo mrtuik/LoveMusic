@@ -465,8 +465,8 @@ private fun ThumbnailHeader(
             } else {
                 Text(
                     text = stringResource(R.string.now_playing),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor
+                    style = MaterialTheme.typography.labelMedium,
+                    color = textColor.copy(alpha = 0.7f)
                 )
             }
             val playingFrom = queueTitle ?: albumTitle
@@ -474,8 +474,9 @@ private fun ThumbnailHeader(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = playingFrom,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = textColor,
                     maxLines = 1,
                     modifier = Modifier.basicMarquee()
                 )

@@ -88,6 +88,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
 import com.metrolist.music.LocalNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.AsyncImage
@@ -550,8 +551,8 @@ fun DailyDiscoverCard(
                 model =
                     ImageRequest
                         .Builder(LocalContext.current)
-                        .data(dailyDiscover.recommendation.thumbnail?.resize(1080, 1080))
-                        .crossfade(true)
+                        .data(dailyDiscover.recommendation.thumbnail?.resize(600, 600))
+                        .crossfade(false)
                         .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
@@ -792,15 +793,13 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
+        // Only emit when the "near the end" boolean flips, instead of on every scrolled row.
         snapshotFlow {
-            lazylistState.layoutInfo.visibleItemsInfo
-                .lastOrNull()
-                ?.index
-        }.collect { lastVisibleIndex ->
-            val len = lazylistState.layoutInfo.totalItemsCount
-            if (lastVisibleIndex != null && lastVisibleIndex >= len - 3) {
-                viewModel.loadMoreYouTubeItems(homePage?.continuation)
-            }
+            val info = lazylistState.layoutInfo
+            val last = info.visibleItemsInfo.lastOrNull()?.index
+            last != null && last >= info.totalItemsCount - 3
+        }.distinctUntilChanged().collect { nearEnd ->
+            if (nearEnd) viewModel.loadMoreYouTubeItems(homePage?.continuation)
         }
     }
 
