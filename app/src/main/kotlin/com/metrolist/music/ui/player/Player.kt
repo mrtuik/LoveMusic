@@ -750,7 +750,7 @@ fun BottomSheetPlayer(
     LaunchedEffect(isPlaying, isCasting) {
         if (!isCasting && isPlaying) {
             while (isActive) {
-                delay(100) // Update more frequently for smoother progress bar
+                delay(if (state.isExpanded) 100L else 250L) // slower polling while mini player is shown (less recomposition/lag)
                 if (sliderPosition == null) { // Only update if user isn't dragging
                     position = playerConnection.player.currentPosition
                     // Don't clobber a valid (metadata-derived) duration with 0/UNSET mid-resolve.
