@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -71,6 +72,7 @@ import com.metrolist.music.extensions.metadata
 import com.metrolist.music.ui.utils.resize
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 
 /**
  * Reels-style "Scroll" tab. It does NOT own a player: it is a vertical pager over the
@@ -103,32 +105,51 @@ fun ScrollScreen(navController: NavController) {
         return
     }
 
+    // NOTE: rememberPagerState is rememberSaveable, so when coming back to this tab it restores the
+    // OLD page (not the song playing now). We therefore always re-align the pager with the player
+    // first, and only after that do we let swipes drive playback.
     val pagerState = rememberPagerState(
         initialPage = currentIndex.coerceIn(0, windows.lastIndex),
         pageCount = { windows.size },
     )
+    val latestWindows by rememberUpdatedState(windows)
+    val latestIndex by rememberUpdatedState(currentIndex)
+    var aligned by remember { mutableStateOf(false) }
 
-    // Swipe -> play that queue item.
-    LaunchedEffect(pagerState) {
+    // 1) Player -> pager: whenever the playing song / queue changes (mini player, notification,
+    //    search, song ended, queue replaced...) the pager jumps to the current song.
+    LaunchedEffect(currentIndex, windows) {
+        if (currentIndex !in windows.indices) return@LaunchedEffect
+        // Don't fight a finger that is still dragging.
+        if (pagerState.isScrollInProgress) {
+            snapshotFlow { pagerState.isScrollInProgress }.first { !it }
+        }
+        val target = latestIndex.coerceIn(0, latestWindows.lastIndex)
+        if (pagerState.currentPage != target) {
+            if (!aligned) {
+                pagerState.scrollToPage(target) // first entry: no animation, no flash of old song
+            } else if (kotlin.math.abs(pagerState.currentPage - target) > 1) {
+                pagerState.scrollToPage(target)
+            } else {
+                pagerState.animateScrollToPage(target)
+            }
+        }
+        aligned = true
+    }
+
+    // 2) Pager -> player: only a settled swipe that differs from what is playing changes the song.
+    LaunchedEffect(pagerState, aligned) {
+        if (!aligned) return@LaunchedEffect
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { page ->
-                val w = windows.getOrNull(page) ?: return@collect
+                val w = latestWindows.getOrNull(page) ?: return@collect
+                val player = playerConnection.player
                 if (page != playerConnection.currentWindowIndex.value) {
-                    playerConnection.player.seekToDefaultPosition(w.firstPeriodIndex)
-                    playerConnection.player.playWhenReady = true
+                    player.seekToDefaultPosition(w.firstPeriodIndex)
+                    player.playWhenReady = true
                 }
             }
-    }
-
-    // Song changed by itself (ended / notification next) -> move pager.
-    LaunchedEffect(currentIndex, windows.size) {
-        if (currentIndex in windows.indices &&
-            currentIndex != pagerState.settledPage &&
-            !pagerState.isScrollInProgress
-        ) {
-            pagerState.animateScrollToPage(currentIndex)
-        }
     }
 
     // Progress polling (only the visible page uses it).

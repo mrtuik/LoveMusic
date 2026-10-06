@@ -329,7 +329,7 @@ private fun ReadyState(onStartRecognition: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.mic),
+                    painter = painterResource(R.drawable.ic_home_wave),
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.onPrimary,
@@ -399,7 +399,7 @@ private fun ListeningState(onCancel: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.mic),
+                    painter = painterResource(R.drawable.ic_home_wave),
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.onPrimary,
@@ -570,7 +570,7 @@ private fun SuccessState(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.mic),
+                    painter = painterResource(R.drawable.ic_home_wave),
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )

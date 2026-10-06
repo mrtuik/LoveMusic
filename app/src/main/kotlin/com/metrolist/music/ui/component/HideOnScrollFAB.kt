@@ -25,6 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -40,6 +42,10 @@ fun BoxScope.HideOnScrollFAB(
     onClick: () -> Unit,
     onRecognitionClick: (() -> Unit)? = null,
 ) {
+    // ~30% smaller than the default 56dp FAB, with a slight green tint on the square.
+    val fabSize = 39.dp
+    val fabIconSize = 17.dp
+    val fabColor = lerp(MaterialTheme.colorScheme.primary, Color(0xFF1DB954), 0.22f)
     AnimatedVisibility(
         visible = visible && lazyListState.isScrollingUp(),
         enter = slideInVertically { it },
@@ -54,33 +60,35 @@ fun BoxScope.HideOnScrollFAB(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             if (onRecognitionClick != null) {
                 FloatingActionButton(
                     onClick = onRecognitionClick,
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(fabSize),
+                    containerColor = fabColor,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_home_wave),
                         contentDescription = stringResource(R.string.recognize_music),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(fabIconSize),
                     )
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
             FloatingActionButton(
                 onClick = onClick,
-                containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(fabSize),
+                containerColor = fabColor,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
             ) {
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(fabIconSize),
                 )
             }
         }

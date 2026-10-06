@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -257,6 +258,7 @@ fun SearchScreen(
                                         ),
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(24.dp),
                                 )
                             }
                         }
@@ -307,7 +309,7 @@ fun SearchScreen(
 
             HideOnScrollFAB(
                 lazyListState = lazyListState,
-                icon = R.drawable.mic,
+                icon = R.drawable.ic_home_wave,
                 onClick = { navController.navigate("recognition") },
             )
         }
