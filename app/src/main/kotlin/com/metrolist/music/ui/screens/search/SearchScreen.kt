@@ -252,7 +252,7 @@ fun SearchScreen(
                                         painterResource(
                                             when (searchSource) {
                                                 SearchSource.LOCAL -> R.drawable.library_music
-                                                SearchSource.ONLINE -> R.drawable.language
+                                                SearchSource.ONLINE -> R.drawable.ic_app_logo
                                             },
                                         ),
                                     contentDescription = null,

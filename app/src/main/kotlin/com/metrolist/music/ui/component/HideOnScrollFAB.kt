@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,16 +57,16 @@ fun BoxScope.HideOnScrollFAB(
             modifier = Modifier.padding(16.dp)
         ) {
             if (onRecognitionClick != null) {
-                SmallFloatingActionButton(
+                FloatingActionButton(
                     onClick = onRecognitionClick,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(40.dp)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.mic),
+                        painter = painterResource(R.drawable.ic_home_wave),
                         contentDescription = stringResource(R.string.recognize_music),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(12.dp))
@@ -81,6 +80,7 @@ fun BoxScope.HideOnScrollFAB(
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }

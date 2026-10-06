@@ -535,7 +535,7 @@ class MainActivity : FragmentActivity() {
                         val notification =
                             NotificationCompat
                                 .Builder(this@MainActivity, "updates")
-                                .setSmallIcon(R.drawable.update)
+                                .setSmallIcon(R.drawable.small_icon)
                                 .setContentTitle(
                                     if (update.isKmp) {
                                         getString(R.string.kmp_upgrade_title, update.release.versionName)
@@ -1271,7 +1271,7 @@ class MainActivity : FragmentActivity() {
                                                         } else {
                                                             1f
                                                         }
-                                                }.background(Color.Transparent),
+                                                }.background(Color.Black),
                                     )
                                 }
                             } else {
@@ -1296,7 +1296,7 @@ class MainActivity : FragmentActivity() {
                                                 val progress = playerBottomSheetState.progress
                                                 alpha =
                                                     if (progress > 0f || (useNewMiniPlayerDesign && !shouldShowNavigationBar)) 0f else 1f
-                                            }.background(Color.Transparent),
+                                            }.background(Color.Black),
                                 )
                             }
                         },
@@ -1721,7 +1721,7 @@ class MainActivity : FragmentActivity() {
             window.statusBarColor = (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            window.navigationBarColor = (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
+            window.navigationBarColor = Color.Black.toArgb()
         }
     }
 }

@@ -943,7 +943,7 @@ class ListenTogetherClient
             val builder =
                 NotificationCompat
                     .Builder(context, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.share)
+                    .setSmallIcon(R.drawable.small_icon)
                     .setContentTitle(context.getString(R.string.listen_together))
                     .setContentText(content)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -996,7 +996,7 @@ class ListenTogetherClient
             val builder =
                 NotificationCompat
                     .Builder(context, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.share)
+                    .setSmallIcon(R.drawable.small_icon)
                     .setContentTitle(context.getString(R.string.listen_together))
                     .setContentText(content)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)

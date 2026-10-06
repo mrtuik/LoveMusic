@@ -179,7 +179,7 @@ fun AppNavigationBar(
     val selectedTint = Color.White
     val unselectedTint = Color.White.copy(alpha = 0.60f)
 
-    Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
+    Box(modifier = modifier.background(glassColor), contentAlignment = Alignment.TopCenter) {
         Row(
             modifier =
                 Modifier

@@ -2529,7 +2529,7 @@ fun HomeScreen(
             HideOnScrollFAB(
                 visible = allLocalItems.isNotEmpty() || allYtItems.isNotEmpty(),
                 lazyListState = lazylistState,
-                icon = R.drawable.shuffle,
+                icon = R.drawable.ic_home_shuffle,
                 onClick = {
                     if (!isListenTogetherGuest) {
                         val local =
