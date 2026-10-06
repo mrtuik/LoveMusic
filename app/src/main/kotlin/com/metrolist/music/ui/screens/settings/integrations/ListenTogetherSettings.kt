@@ -646,7 +646,7 @@ private fun ServerChooserDialog(
                         Modifier
                             .fillMaxWidth()
                             .clickable { onSelect(server) },
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors =
                         CardDefaults.cardColors(
                             containerColor =

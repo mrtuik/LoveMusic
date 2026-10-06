@@ -69,7 +69,7 @@ fun CsvColumnMappingDialog(
             modifier =
                 Modifier
                     .fillMaxWidth(0.95f)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(24.dp)
                     .verticalScroll(rememberScrollState()),
@@ -300,7 +300,7 @@ fun CsvImportProgressDialog(
             modifier =
                 Modifier
                     .fillMaxWidth(0.85f)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

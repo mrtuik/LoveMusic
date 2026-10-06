@@ -195,3 +195,11 @@
 -keepclasseswithmembers class com.metrolist.shazamkit.models.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+## LoveMusic V3 (Task C) keep rules
+-keep class dagger.hilt.** { *; }
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep @androidx.room.Entity class * { *; }
+-keep class com.metrolist.innertube.models.** { *; }
+-keep class androidx.profileinstaller.** { *; }
+-dontwarn androidx.profileinstaller.**

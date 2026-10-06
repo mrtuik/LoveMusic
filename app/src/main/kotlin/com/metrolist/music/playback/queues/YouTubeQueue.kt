@@ -10,6 +10,7 @@ import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.MediaMetadata
+import com.metrolist.music.playback.RadioFilter
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.withContext
 
@@ -17,6 +18,18 @@ class YouTubeQueue(
     private var endpoint: WatchEndpoint,
     override val preloadItem: MediaMetadata? = null,
 ) : Queue {
+    /** True for "same vibe" radio queues (RDAMVM<id> or a bare videoId). */
+    val isRadio: Boolean =
+        endpoint.playlistId?.startsWith("RDAMVM") == true ||
+            (endpoint.videoId != null && endpoint.playlistId == null)
+
+    /**
+     * Ids that radio results must not contain (played this session / already queued).
+     * Set by MusicService before each fetch. Only used when [isRadio].
+     */
+    @Volatile
+    var excludeIds: Set<String> = emptySet()
+
     private var continuation: String? = null
     private var retryCount = 0
     private val maxRetries = 3
@@ -57,13 +70,22 @@ class YouTubeQueue(
                         }
                     }
 
+                    val seedId = endpoint.videoId
+                    var mediaIndex = nextResult.currentIndex ?: 0
+                    if (isRadio) {
+                        items = RadioFilter.filter(items, excludeIds, keepId = seedId)
+                        mediaIndex =
+                            seedId?.let { id -> items.indexOfFirst { it.id == id } }
+                                ?.takeIf { it >= 0 } ?: 0
+                    }
+
                     endpoint = nextResult.endpoint
                     continuation = nextResult.continuation
                     retryCount = 0
                     return@withContext Queue.Status(
                         title = nextResult.title,
                         items = items.map { it.toMediaItem() },
-                        mediaItemIndex = nextResult.currentIndex ?: 0,
+                        mediaItemIndex = mediaIndex,
                     )
                 } catch (e: Exception) {
                     lastException = e
@@ -93,7 +115,13 @@ class YouTubeQueue(
                     endpoint = nextResult.endpoint
                     continuation = nextResult.continuation
                     retryCount = 0
-                    return@withContext nextResult.items.map { it.toMediaItem() }
+                    val songs =
+                        if (isRadio) {
+                            RadioFilter.filter(nextResult.items, excludeIds)
+                        } else {
+                            nextResult.items
+                        }
+                    return@withContext songs.map { it.toMediaItem() }
                 } catch (e: Exception) {
                     lastException = e
                     retryCount++

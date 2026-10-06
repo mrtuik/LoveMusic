@@ -56,11 +56,13 @@ import androidx.media3.common.Timeline
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR
 import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.okhttp.OkHttpDataSource
@@ -137,6 +139,9 @@ import com.metrolist.music.discord.DiscordTemplateRenderer
 import com.metrolist.music.discord.PresenceStatus
 import com.metrolist.music.constants.EnableLastFMScrobblingKey
 import com.metrolist.music.constants.EnableSongCacheKey
+import com.metrolist.music.constants.MaxSongCacheSizeKey
+import com.metrolist.music.constants.PreloadNextSongsKey
+import com.metrolist.music.constants.PreloadOnMeteredKey
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.HistoryDuration
@@ -477,6 +482,15 @@ class MusicService :
     private var retryJob: Job? = null
     private var retryCount = 0
     private var initialBufferRecoveryJob: Job? = null
+
+    // Preload of the next queue items (stream URL + first bytes in playerCache).
+    private var preloadJob: Job? = null
+
+    // Same-vibe radio: songs already played this session + in-flight refill guard (main thread only).
+    private val playedIds = LinkedHashSet<String>()
+    private var radioRefillJob: Job? = null
+    @Volatile
+    private var preloadWriter: CacheWriter? = null
     private var initialBufferRecoveryAttemptedMediaId: String? = null
     // True only when stopOnError() paused playback purely because of a network outage
     // (waitOnNetworkError exhausting its attempts). Lets triggerRetry() know it's safe —
@@ -1770,6 +1784,8 @@ class MusicService :
         }
 
         currentQueue = queue
+        (queue as? YouTubeQueue)?.excludeIds = playedIds.toSet()
+        radioRefillJob?.cancel()
         queueTitle = null
         val persistShuffleAcrossQueues = dataStore.get(PersistentShuffleAcrossQueuesKey, false)
         if (!persistShuffleAcrossQueues && !restoringQueue) {
@@ -1836,6 +1852,74 @@ class MusicService :
         originalQueueSize = initialQueueSize
     }
 
+    /**
+     * Keeps the queue filled. Radio queues keep >= [RadioFilter.MIN_AHEAD] songs ahead: first via the
+     * continuation, and when there is none, by fetching the radio of the LAST queued song.
+     * Other queues keep the old behaviour (load the next page when <= 5 remain).
+     */
+    private fun ensureQueueAhead() {
+        if (player.mediaItemCount == 0) return
+        val queue = currentQueue
+        val radioQueue = queue as? YouTubeQueue
+        val isRadio = radioQueue?.isRadio == true
+        val needsMore =
+            if (isRadio) {
+                RadioFilter.needsMore(player.mediaItemCount, player.currentMediaItemIndex)
+            } else {
+                player.mediaItemCount - player.currentMediaItemIndex <= 5
+            }
+        if (!needsMore) return
+        if (radioRefillJob?.isActive == true) return
+        if (!isRadio && !queue.hasNextPage()) return
+
+        // Snapshot on the player thread; the network call runs on IO.
+        val exclude = HashSet<String>(playedIds)
+        for (i in 0 until player.mediaItemCount) exclude.add(player.getMediaItemAt(i).mediaId)
+        val lastItem = player.getMediaItemAt(player.mediaItemCount - 1)
+        val lastMetadata = lastItem.metadata
+
+        radioRefillJob =
+            scope.launch(SilentHandler) {
+                val newItems = mutableListOf<MediaItem>()
+                withContext(Dispatchers.IO) {
+                    radioQueue?.excludeIds = exclude
+                    var pages = 0
+                    // Continuation pages (a page can be fully filtered out, so try a few).
+                    while (queue.hasNextPage() && newItems.isEmpty() && pages < 3) {
+                        pages++
+                        newItems +=
+                            queue
+                                .nextPage()
+                                .filterExplicit(cachedHideExplicit)
+                                .filterVideoSongs(cachedHideVideoSongs)
+                    }
+                    // No continuation left: new radio from the last queued song.
+                    if (newItems.isEmpty() && isRadio && lastMetadata != null) {
+                        val refill = YouTubeQueue.radio(lastMetadata)
+                        refill.excludeIds = exclude
+                        val status =
+                            refill
+                                .getInitialStatus()
+                                .filterExplicit(cachedHideExplicit)
+                                .filterVideoSongs(cachedHideVideoSongs)
+                        newItems += status.items.filter { it.mediaId != lastItem.mediaId }
+                        if (newItems.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                // Keep following this radio (its continuation) from now on.
+                                if (currentQueue === queue) currentQueue = refill
+                            }
+                        }
+                    }
+                }
+                if (player.playbackState != STATE_IDLE && newItems.isNotEmpty()) {
+                    player.addMediaItems(newItems)
+                    if (player.shuffleModeEnabled) {
+                        applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, cachedShufflePlaylistFirst)
+                    }
+                }
+            }
+    }
+
     fun startRadioSeamlessly() {
         if (!playerInitialized.value) {
             Timber.tag(TAG).w("startRadioSeamlessly called before player initialization")
@@ -1856,6 +1940,7 @@ class MusicService :
                             videoId = currentMediaId,
                         ),
                 )
+            radioQueue.excludeIds = playedIds.toSet()
 
             try {
                 val initialStatus =
@@ -2511,6 +2596,11 @@ class MusicService :
             }
         }
         lastTransitionedMediaId = mediaItem?.mediaId
+        mediaItem?.mediaId?.let { id ->
+            playedIds.add(id)
+            if (playedIds.size > 3000) playedIds.remove(playedIds.first())
+        }
+        schedulePreloadNext(mediaItem?.mediaId)
         initialBufferRecoveryJob?.cancel()
         initialBufferRecoveryJob = null
         initialBufferRecoveryAttemptedMediaId = null
@@ -2573,25 +2663,9 @@ class MusicService :
 
         if (cachedAutoLoadMore &&
             reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT &&
-            player.mediaItemCount - player.currentMediaItemIndex <= 5 &&
-            currentQueue.hasNextPage() &&
             !(cachedDisableLoadMoreWhenRepeatAll && player.repeatMode == REPEAT_MODE_ALL)
         ) {
-            scope.launch(SilentHandler) {
-                val mediaItems =
-                    withContext(Dispatchers.IO) {
-                        currentQueue
-                            .nextPage()
-                            .filterExplicit(cachedHideExplicit)
-                            .filterVideoSongs(cachedHideVideoSongs)
-                    }
-                if (player.playbackState != STATE_IDLE && mediaItems.isNotEmpty()) {
-                    player.addMediaItems(mediaItems)
-                    if (player.shuffleModeEnabled) {
-                        applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, cachedShufflePlaylistFirst)
-                    }
-                }
-            }
+            ensureQueueAhead()
         }
 
         if (cachedPersistentQueue) {
@@ -3467,6 +3541,170 @@ class MusicService :
         }
     }
 
+    // ------------------------------------------------------------------
+    // Preload next songs: resolve stream URLs + pre-cache the first bytes
+    // ------------------------------------------------------------------
+
+    private val preloadHttpClient: OkHttpClient by lazy {
+        OkHttpClient
+            .Builder()
+            .proxy(YouTube.proxy)
+            .proxyAuthenticator { _, response ->
+                YouTube.proxyAuth?.let { auth ->
+                    response.request
+                        .newBuilder()
+                        .header("Proxy-Authorization", auth)
+                        .build()
+                } ?: response.request
+            }.build()
+    }
+
+    private fun cancelPreload() {
+        preloadJob?.cancel()
+        preloadJob = null
+        preloadWriter?.cancel()
+        preloadWriter = null
+    }
+
+    /** 10 s after a song starts, warm up the next [PRELOAD_COUNT] queue items. */
+    private fun schedulePreloadNext(currentMediaId: String?) {
+        cancelPreload()
+        if (currentMediaId == null) return
+        preloadJob =
+            scope.launch {
+                delay(PRELOAD_DELAY_MS)
+                if (player.currentMediaItem?.mediaId != currentMediaId) return@launch
+
+                val ids = mutableListOf<String>()
+                var index = player.currentMediaItemIndex
+                for (step in 0 until PRELOAD_COUNT) {
+                    index =
+                        player.currentTimeline.getNextWindowIndex(
+                            index,
+                            player.repeatMode,
+                            player.shuffleModeEnabled,
+                        )
+                    if (index == C.INDEX_UNSET) break
+                    val item = player.getMediaItemAt(index)
+                    val id = item.mediaId
+                    // YouTube video ids are 11 chars; skips local files, episodes and duplicates.
+                    if (id != currentMediaId && id.length == 11 && item.metadata?.isEpisode != true && id !in ids) {
+                        ids += id
+                    }
+                }
+                if (ids.isEmpty()) return@launch
+
+                withContext(Dispatchers.IO) {
+                    for (id in ids) {
+                        if (!isActive) break
+                        if (!canPreloadNow()) break
+                        runCatching { preloadSong(id) }
+                            .onFailure { Timber.tag(TAG).w(it, "Preload failed for $id") }
+                    }
+                }
+            }
+    }
+
+    /** Respects the preload toggle, song-cache setting, metered network / data saver and cache limit. */
+    private suspend fun canPreloadNow(): Boolean {
+        if (!dataStore.get(PreloadNextSongsKey, true)) return false
+        if (!dataStore.get(EnableSongCacheKey, true)) return false
+        if (castConnectionHandler?.isCasting?.value == true) return false
+
+        val allowMetered = dataStore.get(PreloadOnMeteredKey, false)
+        if (!allowMetered) {
+            if (connectivityManager.isActiveNetworkMetered) return false
+            if (connectivityManager.restrictBackgroundStatus ==
+                ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
+            ) {
+                return false
+            }
+        }
+
+        val maxCacheMb = dataStore.get(MaxSongCacheSizeKey, 1024)
+        if (maxCacheMb == 0) return false
+        if (maxCacheMb > 0) {
+            val limitBytes = maxCacheMb * 1024L * 1024L
+            // Keep headroom so preloading never forces the LRU evictor to drop songs.
+            if (playerCache.cacheSpace + PRELOAD_BYTES > (limitBytes * 0.95).toLong()) return false
+        }
+        return true
+    }
+
+    private suspend fun preloadSong(mediaId: String) {
+        val stream = songUrlCache[mediaId] ?: resolveStreamForPreload(mediaId) ?: return
+
+        val storedLength = database.format(mediaId).first()?.contentLength
+        val length = minOf(storedLength ?: PRELOAD_BYTES, PRELOAD_BYTES)
+
+        if (downloadCache.isCached(mediaId, 0, length) || playerCache.isCached(mediaId, 0, length)) return
+
+        val dataSpec =
+            DataSpec
+                .Builder()
+                .setUri(stream.url.toUri())
+                .setKey(mediaId) // must match the key used by the playback data source
+                .setPosition(0)
+                .setLength(length)
+                .build()
+                .withResolvedStream(stream)
+
+        val dataSource =
+            CacheDataSource
+                .Factory()
+                .setCache(playerCache)
+                .setUpstreamDataSourceFactory(
+                    DefaultDataSource.Factory(this, OkHttpDataSource.Factory(preloadHttpClient)),
+                ).setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
+                .createDataSource()
+
+        val writer = CacheWriter(dataSource, dataSpec, null, null)
+        preloadWriter = writer
+        try {
+            writer.cache()
+            Timber.tag(TAG).d("Preloaded $mediaId ($length bytes max)")
+        } finally {
+            if (preloadWriter === writer) preloadWriter = null
+        }
+    }
+
+    private suspend fun resolveStreamForPreload(mediaId: String): CachedStreamUrl? {
+        val generation = songUrlCache.generation(mediaId)
+        val song = database.songEntity(mediaId)
+        val playback =
+            InnerTubeXPlayer
+                .playerResponseForPlayback(
+                    mediaId,
+                    audioQuality = audioQuality,
+                    connectivityManager = connectivityManager,
+                    contentHints =
+                        ContentHints(
+                            isExplicit = song?.explicit,
+                            isUploaded = song?.isUploaded,
+                        ),
+                ).getOrNull() ?: return null
+
+        songUrlCache.put(
+            mediaId = mediaId,
+            url = playback.streamUrl,
+            requestHeaders = playback.streamHeaders,
+            clientName = playback.streamClient,
+            expiresInSeconds = playback.streamExpiresInSeconds,
+            requireBoundedRange = playback.requireBoundedRange,
+            rangeChunkSizeBytes = playback.rangeChunkSizeBytes,
+            useRangeChunks = playback.useRangeChunks,
+            expectedGeneration = generation,
+        )
+        return CachedStreamUrl(
+            url = playback.streamUrl,
+            requestHeaders = playback.streamHeaders,
+            clientName = playback.streamClient,
+            requireBoundedRange = playback.requireBoundedRange,
+            rangeChunkSizeBytes = playback.rangeChunkSizeBytes,
+            useRangeChunks = playback.useRangeChunks,
+        )
+    }
+
     private fun createCacheDataSource(): CacheDataSource.Factory =
         CacheDataSource
             .Factory()
@@ -4245,6 +4483,7 @@ class MusicService :
 
     override fun onDestroy() {
         isRunning = false
+        cancelPreload()
 
         if (!::player.isInitialized) {
             try {
@@ -5025,6 +5264,11 @@ class MusicService :
         const val NOTIFICATION_ID = 888
         const val ERROR_CODE_NO_STREAM = 1000001
         const val CHUNK_LENGTH = 512 * 1024L
+
+        // Preload of upcoming songs
+        private const val PRELOAD_DELAY_MS = 10_000L
+        private const val PRELOAD_COUNT = 3
+        private const val PRELOAD_BYTES = 1_500_000L // ~1 min of audio at 192 kbps
         const val PERSISTENT_QUEUE_FILE = "persistent_queue.data"
         const val PERSISTENT_AUTOMIX_FILE = "persistent_automix.data"
         const val PERSISTENT_PLAYER_STATE_FILE = "persistent_player_state.data"

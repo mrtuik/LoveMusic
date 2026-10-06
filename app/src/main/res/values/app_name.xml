@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">LoveMusic</string>
+    <string name="app_name_display" translatable="false">Love Music</string>
+    <string name="scroll">Scroll</string>
 </resources>

@@ -140,6 +140,9 @@ class ProgressState(
         }
 }
 
+/** Pure-black container used by the new mini player in every theme. */
+private val MiniPlayerBlack = Color(0xFF0A0A0A)
+
 @Composable
 fun MiniPlayer(
     positionState: MutableLongState,
@@ -189,7 +192,7 @@ private fun NewMiniPlayer(
     val context = LocalContext.current
     var gradientColors by remember { mutableStateOf<List<Color>>(emptyList()) }
     val isSystemInDarkTheme = isSystemInDarkTheme()
-    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.ON)
     val useDarkTheme =
         remember(darkTheme, isSystemInDarkTheme) {
             if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
@@ -286,22 +289,19 @@ private fun NewMiniPlayer(
         }
     }
 
-    // Memoize colors
+    // LoveMusic black mini player: same look in light and dark theme.
     val backgroundColor = when (miniPlayerBackground) {
-        MiniPlayerBackgroundStyle.DEFAULT    -> MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f)
+        MiniPlayerBackgroundStyle.DEFAULT,
+        MiniPlayerBackgroundStyle.PURE_BLACK -> MiniPlayerBlack
         MiniPlayerBackgroundStyle.TRANSPARENT -> Color.Black.copy(alpha = 0.25f)
-        MiniPlayerBackgroundStyle.BLUR       -> MaterialTheme.colorScheme.surfaceContainer
-        MiniPlayerBackgroundStyle.GRADIENT   -> MaterialTheme.colorScheme.surfaceContainer
-        MiniPlayerBackgroundStyle.PURE_BLACK -> Color.Black
+        MiniPlayerBackgroundStyle.BLUR,
+        MiniPlayerBackgroundStyle.GRADIENT   -> MiniPlayerBlack
     }
-    val forceLightColors = !useDarkTheme && (miniPlayerBackground == MiniPlayerBackgroundStyle.PURE_BLACK ||
-            miniPlayerBackground == MiniPlayerBackgroundStyle.BLUR ||
-            miniPlayerBackground == MiniPlayerBackgroundStyle.GRADIENT)
 
-    val primaryColor = if (forceLightColors) Color.White else MaterialTheme.colorScheme.primary
-    val outlineColor = if (forceLightColors) Color.White else MaterialTheme.colorScheme.outline
-    val onSurfaceColor = if (forceLightColors) Color.White else MaterialTheme.colorScheme.onSurface
-    val errorColor = if (forceLightColors) Color(0xFFFF6B6B) else MaterialTheme.colorScheme.error
+    val primaryColor = Color.White          // progress ring / subscribed state
+    val outlineColor = Color.White          // outlined buttons (alpha applied at use site)
+    val onSurfaceColor = Color.White        // text + icons
+    val errorColor = Color(0xFFFF6B6B)      // liked heart / error text, readable on black
 
     Box(
         modifier =
@@ -382,19 +382,13 @@ private fun NewMiniPlayer(
                     .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
                     .shadow(
                         elevation = 16.dp,
-                        shape = RoundedCornerShape(32.dp),
-                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
-                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
+                        shape = RoundedCornerShape(8.dp),
+                        ambientColor = Color.Black,
+                        spotColor = Color.Black,
                     )
-                    .clip(RoundedCornerShape(32.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(color = backgroundColor)
-                    .border(
-                        1.dp,
-                        Brush.verticalGradient(
-                            listOf(Color.White.copy(alpha = 0.38f), Color.White.copy(alpha = 0.06f)),
-                        ),
-                        RoundedCornerShape(32.dp),
-                    )
+                    .border(1.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(8.dp))
                     .clickable(
                         interactionSource = interactionSource,
                         indication = LocalIndication.current,
@@ -526,7 +520,7 @@ private fun NewMiniPlayerPlayButton(
     val isListenTogetherGuest = listenTogetherManager?.let { it.isInRoom && !it.isHost } ?: false
     val isMuted by playerConnection.isMuted.collectAsStateWithLifecycle()
 
-    val trackColor = outlineColor.copy(alpha = 0.2f)
+    val trackColor = Color.White.copy(alpha = 0.2f)
     val strokeWidth = 3.dp
 
     Box(
@@ -573,7 +567,7 @@ private fun NewMiniPlayerPlayButton(
                 Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .border(1.dp, outlineColor.copy(alpha = 0.3f), CircleShape)
+                    .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape)
                     .clickable {
                         if (isListenTogetherGuest) {
                             playerConnection.toggleMute()
@@ -1062,7 +1056,7 @@ private fun SubscribeButton(
                 .clip(CircleShape)
                 .border(
                     width = 1.dp,
-                    color = if (isSubscribed) primaryColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
+                    color = if (isSubscribed) primaryColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.2f),
                     shape = CircleShape,
                 ).background(
                     color = if (isSubscribed) primaryColor.copy(alpha = 0.1f) else Color.Transparent,
@@ -1118,7 +1112,7 @@ private fun FavoriteButton(
                 .clip(CircleShape)
                 .border(
                     width = 1.dp,
-                    color = if (isLiked) errorColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
+                    color = if (isLiked) errorColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.2f),
                     shape = CircleShape,
                 ).background(
                     color = if (isLiked) errorColor.copy(alpha = 0.1f) else Color.Transparent,

@@ -255,6 +255,7 @@ dependencies {
     implementation(libs.coroutines.guava)
 
     implementation(libs.activity)
+    implementation(libs.profileinstaller)
     implementation(libs.hilt.navigation)
     implementation(libs.datastore)
 

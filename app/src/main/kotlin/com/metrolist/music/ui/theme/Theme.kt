@@ -101,13 +101,13 @@ val LoveLightColorScheme = lightColorScheme(
     surfaceContainerHighest = Color(0xFFEFD7E4),
 )
 
-/** Rounder, softer corners across cards, sheets and dialogs. */
+/** Spotify-like tight corners across cards, sheets and dialogs. */
 val LoveShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(26.dp),
-    extraLarge = RoundedCornerShape(34.dp),
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(12.dp),
+    extraLarge = RoundedCornerShape(16.dp),
 )
 
 private val BaseTypography = Typography()

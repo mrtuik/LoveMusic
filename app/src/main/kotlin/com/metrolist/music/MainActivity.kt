@@ -67,6 +67,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
@@ -597,7 +598,7 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+        val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.ON)
         val isSystemInDarkTheme = isSystemInDarkTheme()
         val useDarkTheme =
             remember(darkTheme, isSystemInDarkTheme) {
@@ -610,7 +611,7 @@ class MainActivity : FragmentActivity() {
 
         val enableLandscapeScaling by rememberPreference(EnableLandscapeScalingKey, defaultValue = false)
         val userDensityScale by rememberPreference(DensityScaleKey, defaultValue = 1f)
-        val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
+        val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = true)
         val pureBlack =
             remember(pureBlackEnabled, useDarkTheme) {
                 pureBlackEnabled && useDarkTheme
@@ -843,14 +844,21 @@ class MainActivity : FragmentActivity() {
                     label = "navBarHeight",
                 )
 
+                // Scroll tab is its own full-screen player: collapse the mini player to 0dp
+                // (animated by the bottom sheet) so it is hidden and takes no bottom padding.
+                val isScrollRoute = currentRoute == Screens.Scroll.route
                 val playerBottomSheetState =
                     rememberBottomSheetState(
                         dismissedBound = 0.dp,
                         collapsedBound =
-                            bottomInset +
-                                (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
-                                (if (useNewMiniPlayerDesign) MiniPlayerBottomSpacing else 0.dp) +
-                                MiniPlayerHeight,
+                            if (isScrollRoute) {
+                                0.dp
+                            } else {
+                                bottomInset +
+                                    (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
+                                    (if (useNewMiniPlayerDesign) MiniPlayerBottomSpacing else 0.dp) +
+                                    MiniPlayerHeight
+                            },
                         expandedBound = maxHeight,
                     )
 
@@ -1015,6 +1023,7 @@ class MainActivity : FragmentActivity() {
                         when (navBackStackEntry?.destination?.route) {
                             Screens.Home.route -> R.string.home
                             Screens.Search.route -> R.string.search
+                            Screens.Scroll.route -> R.string.scroll
                             Screens.Library.route -> R.string.filter_library
                             Screens.ListenTogether.route -> R.string.together
                             else -> null
@@ -1059,12 +1068,38 @@ class MainActivity : FragmentActivity() {
                                 exit = fadeOut(animationSpec = tween(durationMillis = 200)),
                             ) {
                                 Row {
-                                    TopAppBar(
+                                    CenterAlignedTopAppBar(
                                         title = {
                                             Text(
-                                                text = currentTitleRes?.let { stringResource(it) } ?: "",
+                                                text = stringResource(R.string.app_name_display),
                                                 style = MaterialTheme.typography.titleLarge,
                                             )
+                                        },
+                                        navigationIcon = {
+                                            IconButton(onClick = { showAccountDialog = true }) {
+                                                BadgedBox(badge = {
+                                                    if (latestVersionName != BuildConfig.BASE_VERSION_NAME) {
+                                                        Badge()
+                                                    }
+                                                }) {
+                                                    if (accountImageUrl != null) {
+                                                        AsyncImage(
+                                                            model = accountImageUrl,
+                                                            contentDescription = stringResource(R.string.account),
+                                                            modifier =
+                                                                Modifier
+                                                                    .size(28.dp)
+                                                                    .clip(CircleShape),
+                                                        )
+                                                    } else {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.account),
+                                                            contentDescription = stringResource(R.string.account),
+                                                            modifier = Modifier.size(28.dp),
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         },
                                         actions = {
                                             if (showHistoryButton) {
@@ -1087,30 +1122,6 @@ class MainActivity : FragmentActivity() {
                                                         painter = painterResource(R.drawable.group_outlined),
                                                         contentDescription = stringResource(R.string.together),
                                                     )
-                                                }
-                                            }
-                                            IconButton(onClick = { showAccountDialog = true }) {
-                                                BadgedBox(badge = {
-                                                    if (latestVersionName != BuildConfig.BASE_VERSION_NAME) {
-                                                        Badge()
-                                                    }
-                                                }) {
-                                                    if (accountImageUrl != null) {
-                                                        AsyncImage(
-                                                            model = accountImageUrl,
-                                                            contentDescription = stringResource(R.string.account),
-                                                            modifier =
-                                                                Modifier
-                                                                    .size(24.dp)
-                                                                    .clip(CircleShape),
-                                                        )
-                                                    } else {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.account),
-                                                            contentDescription = stringResource(R.string.account),
-                                                            modifier = Modifier.size(24.dp),
-                                                        )
-                                                    }
                                                 }
                                             }
                                         },

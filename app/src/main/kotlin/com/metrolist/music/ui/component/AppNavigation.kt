@@ -172,13 +172,12 @@ fun AppNavigationBar(
     val scheme = MaterialTheme.colorScheme
 
     // Floating glass pill: translucent surface + soft glow shadow + light-catching border.
-    val pillShape = RoundedCornerShape(30.dp)
-    val glassColor =
-        if (pureBlack) Color.Black.copy(alpha = 0.88f) else scheme.surfaceContainerHigh.copy(alpha = 0.84f)
-    val borderBrush =
-        Brush.verticalGradient(
-            listOf(Color.White.copy(alpha = 0.40f), Color.White.copy(alpha = 0.06f)),
-        )
+    val pillShape = RoundedCornerShape(8.dp)
+    // LoveMusic black nav bar: pure black in light and dark theme.
+    val glassColor = Color.Black
+    val borderColor = Color.White.copy(alpha = 0.20f)
+    val selectedTint = Color.White
+    val unselectedTint = Color.White.copy(alpha = 0.60f)
 
     Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
         Row(
@@ -191,11 +190,11 @@ fun AppNavigationBar(
                     .shadow(
                         elevation = 18.dp,
                         shape = pillShape,
-                        ambientColor = scheme.primary.copy(alpha = 0.30f),
-                        spotColor = scheme.primary.copy(alpha = 0.30f),
+                        ambientColor = Color.Black,
+                        spotColor = Color.Black,
                     ).clip(pillShape)
                     .background(glassColor)
-                    .border(1.dp, borderBrush, pillShape)
+                    .border(1.dp, borderColor, pillShape)
                     .padding(horizontal = 6.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
@@ -241,7 +240,7 @@ fun AppNavigationBar(
                     }
                 }
 
-                val tint = if (isSelected) scheme.primary else scheme.onSurfaceVariant
+                val tint = if (isSelected) selectedTint else unselectedTint
                 val label = stringResource(screen.titleId)
 
                 Column(
@@ -249,7 +248,7 @@ fun AppNavigationBar(
                         Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .clip(RoundedCornerShape(24.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .clickable(
                                 interactionSource = interactionSource,
                                 indication = null,
@@ -265,23 +264,9 @@ fun AppNavigationBar(
                     Box(
                         modifier =
                             Modifier
-                                .width(if (isSelected) 54.dp else 40.dp)
+                                .width(40.dp)
                                 .height(if (slimNav) 30.dp else 28.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(
-                                    if (isSelected) {
-                                        Brush.horizontalGradient(
-                                            listOf(
-                                                scheme.primary.copy(alpha = 0.30f),
-                                                scheme.secondary.copy(alpha = 0.26f),
-                                            ),
-                                        )
-                                    } else {
-                                        Brush.horizontalGradient(
-                                            listOf(Color.Transparent, Color.Transparent),
-                                        )
-                                    },
-                                ),
+                                .clip(RoundedCornerShape(50)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(

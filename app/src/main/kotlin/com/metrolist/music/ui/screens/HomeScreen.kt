@@ -239,7 +239,7 @@ fun CommunityPlaylistCard(
             CardDefaults.cardColors(
                 containerColor = containerColor,
             ),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(12.dp),
         onClick = onClick,
     ) {
         Column(
@@ -524,7 +524,7 @@ fun DailyDiscoverCard(
         modifier =
             modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(28.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = {
@@ -543,7 +543,7 @@ fun DailyDiscoverCard(
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -1221,7 +1221,7 @@ fun HomeScreen(
                                 items(5) {
                                     TextPlaceholder(
                                         height = 30.dp,
-                                        shape = RoundedCornerShape(16.dp),
+                                        shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.width(72.dp),
                                     )
                                 }
@@ -1454,19 +1454,13 @@ fun HomeScreen(
                                 }
 
                                 item(key = "speed_dial_list") {
-                                    val targetItemSize = 160.dp
+                                    // Spotify-style compact cards: 2 columns, 56dp tall (+4dp padding each side).
                                     val availableWidth = maxWidth - 32.dp
-                                    val columns = (availableWidth / targetItemSize).toInt().coerceAtLeast(3)
-                                    val rows =
-                                        if (columns >= 6) {
-                                            1
-                                        } else if (columns >= 4) {
-                                            2
-                                        } else {
-                                            3
-                                        }
+                                    val columns = 2
+                                    val rows = 4
                                     val itemsPerPage = columns * rows
                                     val itemWidth = availableWidth / columns
+                                    val itemHeight = 64.dp
 
                                     val pagerState = rememberPagerState(pageCount = { (items.size + itemsPerPage - 1) / itemsPerPage })
 
@@ -1482,7 +1476,7 @@ fun HomeScreen(
                                             modifier =
                                                 Modifier
                                                     .fillMaxWidth()
-                                                    .height(itemWidth * rows),
+                                                    .height(itemHeight * rows),
                                         ) { page ->
                                             val pageStartIndex = page * itemsPerPage
                                             val pageItems = items.drop(pageStartIndex).take(itemsPerPage)
@@ -1500,7 +1494,7 @@ fun HomeScreen(
                                                                     modifier =
                                                                         Modifier
                                                                             .width(itemWidth)
-                                                                            .height(itemWidth)
+                                                                            .height(itemHeight)
                                                                             .padding(4.dp),
                                                                 ) {
                                                                     RandomizeGridItem(
@@ -1516,21 +1510,15 @@ fun HomeScreen(
                                                                                             when (randomItem) {
                                                                                                 is SongItem -> {
                                                                                                     playerConnection.playQueue(
-                                                                                                        if (autoRadioQueue) {
-                                                                                                            YouTubeQueue(
-                                                                                                                randomItem.endpoint
-                                                                                                                    ?: WatchEndpoint(
-                                                                                                                        videoId = randomItem.id,
-                                                                                                                    ),
-                                                                                                                randomItem.toMediaMetadata(),
-                                                                                                            )
-                                                                                                        } else {
-                                                                                                            ListQueue(
-                                                                                                                title = randomItem.title,
-                                                                                                                items = listOf(randomItem.toMediaItem())
-                                                                                                            )
-                                                                                                        }
+                                                                                                        YouTubeQueue(
+                                                                                                            randomItem.endpoint
+                                                                                                                ?: WatchEndpoint(
+                                                                                                                    videoId = randomItem.id,
+                                                                                                                ),
+                                                                                                            randomItem.toMediaMetadata(),
+                                                                                                        ),
                                                                                                     )
+                                                                                                    navController.navigate(Screens.Scroll.route) { launchSingleTop = true }
                                                                                                 }
 
                                                                                                 is AlbumItem -> {
@@ -1588,7 +1576,7 @@ fun HomeScreen(
                                                                     modifier =
                                                                         Modifier
                                                                             .width(itemWidth)
-                                                                            .height(itemWidth)
+                                                                            .height(itemHeight)
                                                                             .padding(4.dp),
                                                                 ) {
                                                                     SpeedDialGridItem(
@@ -1891,7 +1879,7 @@ fun HomeScreen(
                                         contentPadding = PaddingValues(horizontal = 16.dp),
                                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                                     ) {
-                                        items(playlists) { item ->
+                                        items(playlists, key = { "home_community_${it.hashCode()}" }, contentType = { "community_playlist" }) { item ->
                                             CommunityPlaylistCard(
                                                 item = item,
                                                 onClick = {
@@ -2555,6 +2543,7 @@ fun HomeScreen(
                                 when (val luckyItem = allLocalItems.random()) {
                                     is Song -> {
                                         playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
+                                        navController.navigate(Screens.Scroll.route) { launchSingleTop = true }
                                     }
 
                                     is Album -> {

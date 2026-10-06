@@ -57,6 +57,8 @@ import com.metrolist.music.constants.LoudnessLevel
 import com.metrolist.music.constants.LoudnessLevelKey
 import com.metrolist.music.constants.PauseOnMute
 import com.metrolist.music.constants.PersistentQueueKey
+import com.metrolist.music.constants.PreloadNextSongsKey
+import com.metrolist.music.constants.PreloadOnMeteredKey
 import com.metrolist.music.constants.PersistentShuffleAcrossQueuesKey
 import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.RememberShuffleAndRepeatKey
@@ -158,6 +160,14 @@ fun PlayerSettings(
         defaultValue = false
     )
 
+    val (preloadNextSongs, onPreloadNextSongsChange) = rememberPreference(
+        PreloadNextSongsKey,
+        defaultValue = true
+    )
+    val (preloadOnMetered, onPreloadOnMeteredChange) = rememberPreference(
+        PreloadOnMeteredKey,
+        defaultValue = false
+    )
     val (autoLoadMore, onAutoLoadMoreChange) = rememberPreference(
         AutoLoadMoreKey,
         defaultValue = true
@@ -766,6 +776,48 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { onPersistentQueueChange(!persistentQueue) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.download),
+                    title = { Text(stringResource(R.string.preload_next_songs)) },
+                    description = { Text(stringResource(R.string.preload_next_songs_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = preloadNextSongs,
+                            onCheckedChange = onPreloadNextSongsChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (preloadNextSongs) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onPreloadNextSongsChange(!preloadNextSongs) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.cached),
+                    title = { Text(stringResource(R.string.preload_on_metered)) },
+                    description = { Text(stringResource(R.string.preload_on_metered_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = preloadOnMetered,
+                            onCheckedChange = onPreloadOnMeteredChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (preloadOnMetered) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onPreloadOnMeteredChange(!preloadOnMetered) }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.playlist_add),

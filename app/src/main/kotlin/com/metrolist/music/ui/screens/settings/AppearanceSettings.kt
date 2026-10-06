@@ -729,7 +729,7 @@ fun AppearanceSettings(
                             Modifier
                                 .aspectRatio(1f)
                                 .weight(1f)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .border(
                                     1.dp,
                                     if (sliderStyle == SliderStyle.DEFAULT &&
@@ -739,7 +739,7 @@ fun AppearanceSettings(
                                     } else {
                                         MaterialTheme.colorScheme.outlineVariant
                                     },
-                                    RoundedCornerShape(16.dp),
+                                    RoundedCornerShape(12.dp),
                                 ).clickable {
                                     onSliderStyleChange(SliderStyle.DEFAULT)
                                     onSquigglySliderChange(false)
@@ -769,7 +769,7 @@ fun AppearanceSettings(
                             Modifier
                                 .aspectRatio(1f)
                                 .weight(1f)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .border(
                                     1.dp,
                                     if (sliderStyle == SliderStyle.WAVY &&
@@ -779,7 +779,7 @@ fun AppearanceSettings(
                                     } else {
                                         MaterialTheme.colorScheme.outlineVariant
                                     },
-                                    RoundedCornerShape(16.dp),
+                                    RoundedCornerShape(12.dp),
                                 ).clickable {
                                     onSliderStyleChange(SliderStyle.WAVY)
                                     onSquigglySliderChange(false)
@@ -814,7 +814,7 @@ fun AppearanceSettings(
                             Modifier
                                 .aspectRatio(1f)
                                 .weight(1f)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .border(
                                     1.dp,
                                     if (sliderStyle ==
@@ -824,7 +824,7 @@ fun AppearanceSettings(
                                     } else {
                                         MaterialTheme.colorScheme.outlineVariant
                                     },
-                                    RoundedCornerShape(16.dp),
+                                    RoundedCornerShape(12.dp),
                                 ).clickable {
                                     onSliderStyleChange(SliderStyle.SLIM)
                                     onSquigglySliderChange(false)
@@ -860,7 +860,7 @@ fun AppearanceSettings(
                             Modifier
                                 .aspectRatio(1f)
                                 .weight(1f)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .border(
                                     1.dp,
                                     if (sliderStyle == SliderStyle.WAVY &&
@@ -870,7 +870,7 @@ fun AppearanceSettings(
                                     } else {
                                         MaterialTheme.colorScheme.outlineVariant
                                     },
-                                    RoundedCornerShape(16.dp),
+                                    RoundedCornerShape(12.dp),
                                 ).clickable {
                                     onSliderStyleChange(SliderStyle.WAVY)
                                     onSquigglySliderChange(true)

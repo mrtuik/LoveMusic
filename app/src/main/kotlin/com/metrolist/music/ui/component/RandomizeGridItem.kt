@@ -5,7 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -47,7 +47,7 @@ fun RandomizeGridItem(
     Box(
         modifier =
             modifier
-                .aspectRatio(1f)
+                .fillMaxSize()
                 .clip(RoundedCornerShape(ThumbnailCornerRadius))
                 .background(MaterialTheme.colorScheme.secondaryContainer)
                 .clickable(onClick = onClick),
@@ -55,8 +55,8 @@ fun RandomizeGridItem(
     ) {
         // Die Dots (5-pattern)
         val dotColor = MaterialTheme.colorScheme.onSecondaryContainer
-        val dotSize = 14.dp
-        val padding = 24.dp
+        val dotSize = 8.dp
+        val padding = 10.dp
 
         // Using a single Center alignment and offsetting FROM center ensures they
         // collapse TO center correctly.

@@ -243,7 +243,7 @@ fun AboutScreen(
 
         // App Header Section
         ElevatedCard(
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -331,7 +331,7 @@ fun AboutScreen(
 
         // Lead Developer Hero Card
         ElevatedCard(
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
