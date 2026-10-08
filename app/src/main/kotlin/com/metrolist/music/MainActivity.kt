@@ -1264,9 +1264,7 @@ class MainActivity : FragmentActivity() {
                                                 .graphicsLayer {
                                                     val progress = playerBottomSheetState.progress
                                                     alpha =
-                                                        if (progress > 0f ||
-                                                            (useNewMiniPlayerDesign && !shouldShowNavigationBar)
-                                                        ) {
+                                                        if (progress > 0f) {
                                                             0f
                                                         } else {
                                                             1f
@@ -1295,7 +1293,7 @@ class MainActivity : FragmentActivity() {
                                             .graphicsLayer {
                                                 val progress = playerBottomSheetState.progress
                                                 alpha =
-                                                    if (progress > 0f || (useNewMiniPlayerDesign && !shouldShowNavigationBar)) 0f else 1f
+                                                    if (progress > 0f) 0f else 1f
                                             }.background(Color.Black),
                                 )
                             }

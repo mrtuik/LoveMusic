@@ -269,7 +269,7 @@ inline fun ListItem(
                 .background(
                     color = // selected active
                         if (isSelected == true) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                        else MaterialTheme.colorScheme.secondaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHighest // dark highlight, text stays readable
                 )
         } else if (isSelected == true) {
             modifier // inactive selected
