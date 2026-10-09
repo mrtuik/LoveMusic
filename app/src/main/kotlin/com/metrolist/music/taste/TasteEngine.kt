@@ -94,7 +94,34 @@ class TasteEngine private constructor(private val database: MusicDatabase) {
                 counts[lang] = (counts[lang] ?: 0) + 1
             }
             val nonLatin = counts.filterKeys { it != "latin" }.maxByOrNull { it.value }
-            return nonLatin?.key ?: "latin"
+            return nonLatin?.key ?: romanizedLanguage(text)
+        }
+
+        private val BANGLA_WORDS = setOf(
+            "ami", "tumi", "tomar", "amar", "tomake", "amake", "tomay", "amay", "bhalobasha", "bhalobashi",
+            "valobasha", "valobashi", "bhalobese", "keno", "kothay", "nai", "moner", "bondhu", "jibon",
+            "chokh", "shopno", "kemon", "achi", "ache", "cholo", "hobe", "amra", "tomra", "tui", "tor",
+            "ekhon", "jodi", "tobe", "kintu", "brishti", "megh", "nodi", "pakhi", "rater", "bhor", "sondhya",
+            "ekta", "ekti", "gaan", "praner", "dekhi", "bolo", "bol", "jaw", "jabo", "thakbo", "shono", "shunbo",
+        )
+        private val HINDI_WORDS = setOf(
+            "tum", "tumhe", "tumhari", "tumhara", "mera", "meri", "mujhe", "main", "hum", "humko", "tera",
+            "teri", "tujhe", "tujhse", "tumse", "pyaar", "pyar", "ishq", "mohabbat", "dil", "zindagi", "sapna",
+            "kyun", "kyu", "kaise", "kahan", "nahi", "nahin", "hai", "hain", "tha", "thi", "bina", "saath",
+            "raat", "aankhen", "ankhein", "yaar", "dost", "kabhi", "abhi", "phir", "mere", "humsafar", "sanam",
+            "judaai", "barsaat", "jaan", "deewana", "aashiq", "tere", "teray", "kuch", "sab", "bhi", "woh", "wo",
+        )
+
+        /** Banglish -> "bn", Hinglish -> "hi" (shared with the native-script weights); needs a clear winner. */
+        fun romanizedLanguage(text: String): String {
+            val words = text.lowercase().split(Regex("[^a-z]+")).filter { it.length > 1 }
+            val bn = words.count { it in BANGLA_WORDS }
+            val hi = words.count { it in HINDI_WORDS }
+            return when {
+                bn > hi -> "bn"
+                hi > bn -> "hi"
+                else -> "latin"
+            }
         }
 
         fun timeBucket(now: Long = System.currentTimeMillis()): String {

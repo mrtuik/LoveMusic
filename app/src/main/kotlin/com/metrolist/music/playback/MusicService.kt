@@ -1924,6 +1924,41 @@ class MusicService :
             }
     }
 
+    /**
+     * Called when the Scroll tab opens. Keeps the current song playing and swaps everything after it
+     * for a taste-based batch; later refills come from [PersonalFeedQueue]. No-op if already a feed.
+     */
+    fun ensurePersonalFeed() {
+        if (!playerInitialized.value) return
+        if (player.mediaItemCount == 0) {
+            startPersonalFeed()
+            return
+        }
+        if (currentQueue is PersonalFeedQueue) return
+        val current = player.currentMediaItem ?: return
+        val queue = PersonalFeedQueue(this, FeedBuilder(TasteEngine.get(database)), current.mediaId)
+        scope.launch(SilentHandler) {
+            val items =
+                withContext(Dispatchers.IO) {
+                    queue
+                        .getInitialStatus()
+                        .filterExplicit(cachedHideExplicit)
+                        .filterVideoSongs(cachedHideVideoSongs)
+                        .items
+                        .filter { it.mediaId != current.mediaId }
+                }
+            if (items.isEmpty() || player.currentMediaItem?.mediaId != current.mediaId) return@launch
+            val next = player.currentMediaItemIndex + 1
+            if (next < player.mediaItemCount) player.removeMediaItems(next, player.mediaItemCount)
+            player.addMediaItems(items)
+            currentQueue = queue
+            queueTitle = null
+            if (player.shuffleModeEnabled) {
+                applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, cachedShufflePlaylistFirst)
+            }
+        }
+    }
+
     /** Starts the endless taste-based Scroll feed (online radio-from-taste, offline liked + downloaded). */
     fun startPersonalFeed(fallbackSeedId: String? = null) {
         playQueue(PersonalFeedQueue(this, FeedBuilder(TasteEngine.get(database)), fallbackSeedId))

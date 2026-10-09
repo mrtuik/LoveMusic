@@ -22,7 +22,11 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -86,7 +90,7 @@ import com.metrolist.music.taste.TasteEngine
  * media notification. Swiping jumps to that queue item; the service already loads
  * more radio songs automatically when the queue runs low.
  */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ScrollScreen(navController: NavController) {
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -101,11 +105,21 @@ fun ScrollScreen(navController: NavController) {
     val (hintShown, setHintShown) = rememberPreference(ScrollSwipeHintShownKey, defaultValue = false)
 
     val scope = rememberCoroutineScope()
+    // Opening the tab always switches to the taste-based feed (keeps the current song, replaces what is upcoming).
+    LaunchedEffect(Unit) { playerConnection.service.ensurePersonalFeed() }
+    val pullState = rememberPullToRefreshState()
+    var refreshing by remember { mutableStateOf(false) }
+    val refreshFeed: (String?) -> Unit = { seedId ->
+        refreshing = true
+        playerConnection.service.startPersonalFeed(seedId)
+        scope.launch {
+            delay(1500)
+            refreshing = false
+        }
+    }
     val taste = remember(database) { TasteEngine.get(database) }
 
     if (windows.isEmpty()) {
-        // Nothing queued: build the taste-based feed (online radio-from-taste, or liked + downloaded offline).
-        LaunchedEffect(Unit) { playerConnection.service.startPersonalFeed() }
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             Text(
                 text = "Building your feed…",
@@ -189,6 +203,7 @@ fun ScrollScreen(navController: NavController) {
     }
 
     val currentMeta = windows.getOrNull(currentIndex)?.mediaItem?.metadata
+    val latestMeta by rememberUpdatedState(currentMeta)
     AddToPlaylistDialog(
         isVisible = showPlaylistDialog && currentMeta != null,
         onGetSong = {
@@ -199,7 +214,11 @@ fun ScrollScreen(navController: NavController) {
         onDismiss = { showPlaylistDialog = false },
     )
 
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .pullToRefresh(state = pullState, isRefreshing = refreshing, onRefresh = { refreshFeed(latestMeta?.id) }),
+    ) {
     VerticalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -346,11 +365,14 @@ fun ScrollScreen(navController: NavController) {
         }
     }
 
+    PullToRefreshDefaults.Indicator(
+        state = pullState,
+        isRefreshing = refreshing,
+        modifier = Modifier.align(Alignment.TopCenter),
+    )
+
     IconButton(
-        onClick = {
-            // Fresh batch from the latest taste data, seeded with what is playing now as a fallback.
-            playerConnection.service.startPersonalFeed(currentMeta?.id)
-        },
+        onClick = { refreshFeed(currentMeta?.id) },
         modifier = Modifier
             .align(Alignment.TopEnd)
             .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))

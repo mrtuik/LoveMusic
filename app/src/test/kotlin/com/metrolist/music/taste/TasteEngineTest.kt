@@ -28,4 +28,11 @@ class TasteEngineTest {
         assertEquals("hi", TasteEngine.detectLanguage("तेरे बिना"))
         assertEquals("latin", TasteEngine.detectLanguage("Blinding Lights"))
     }
+
+    @Test
+    fun detectsRomanizedBanglaAndHindi() {
+        assertEquals("bn", TasteEngine.detectLanguage("Tumi Amar Bhalobasha"))
+        assertEquals("hi", TasteEngine.detectLanguage("Tere Bina Zindagi"))
+        assertEquals("latin", TasteEngine.detectLanguage("Blinding Lights"))
+    }
 }
