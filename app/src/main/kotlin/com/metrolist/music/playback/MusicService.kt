@@ -172,6 +172,10 @@ import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
 import com.metrolist.music.db.MusicDatabase
+import com.metrolist.music.playback.queues.PersonalFeedQueue
+import com.metrolist.music.taste.FeedBuilder
+import com.metrolist.music.taste.SignalKind
+import com.metrolist.music.taste.TasteEngine
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.FormatEntity
 import com.metrolist.music.db.entities.LyricsEntity
@@ -1920,6 +1924,11 @@ class MusicService :
             }
     }
 
+    /** Starts the endless taste-based Scroll feed (online radio-from-taste, offline liked + downloaded). */
+    fun startPersonalFeed(fallbackSeedId: String? = null) {
+        playQueue(PersonalFeedQueue(this, FeedBuilder(TasteEngine.get(database)), fallbackSeedId))
+    }
+
     fun startRadioSeamlessly() {
         if (!playerInitialized.value) {
             Timber.tag(TAG).w("startRadioSeamlessly called before player initialization")
@@ -2263,6 +2272,9 @@ class MusicService :
                 updateNotification(isLiked = song.liked)
                 updateWidgetUI(player.isPlaying, isLiked = song.liked)
 
+                scope.launch(Dispatchers.IO + SilentHandler) {
+                    TasteEngine.get(database).recordEvent(librarySong, if (song.liked) SignalKind.LIKE else SignalKind.UNLIKE)
+                }
                 database.query {
                     update(song)
                     syncUtils.likeSong(song)
@@ -4279,6 +4291,15 @@ class MusicService :
     ) {
         val mediaItem = eventTime.timeline.getWindow(eventTime.windowIndex, Timeline.Window()).mediaItem
         val historyDurationMs = dataStore[HistoryDuration]?.times(1000f) ?: 30000f
+
+        // Taste tracking records EVERY listen (incl. quick skips); history below only keeps long ones.
+        if (playbackStats.totalPlayTimeMs >= 1500 && !dataStore.get(PauseListenHistoryKey, false)) {
+            mediaItem.metadata?.let { meta ->
+                scope.launch(Dispatchers.IO + SilentHandler) {
+                    TasteEngine.get(database).recordListen(meta, playbackStats.totalPlayTimeMs)
+                }
+            }
+        }
 
         if (playbackStats.totalPlayTimeMs >= historyDurationMs &&
             !dataStore.get(PauseListenHistoryKey, false)

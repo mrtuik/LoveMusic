@@ -5,6 +5,8 @@
 
 package com.metrolist.music.playback
 
+import com.metrolist.music.taste.SignalKind
+import com.metrolist.music.taste.TasteEngine
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.core.content.getSystemService
@@ -258,6 +260,7 @@ constructor(
                                 Download.STATE_COMPLETED -> {
                                     removeFromPlayerCache(download.request.id)
                                     database.updateDownloadedInfo(download.request.id, true, LocalDateTime.now())
+                                    runCatching { TasteEngine.get(database).recordEventById(download.request.id, SignalKind.DOWNLOAD) }
                                 }
                                 Download.STATE_FAILED,
                                 Download.STATE_STOPPED,

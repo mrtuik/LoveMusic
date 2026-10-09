@@ -23,11 +23,13 @@ import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.metrolist.music.db.daos.SpeedDialDao
+import com.metrolist.music.db.daos.TasteDao
 import com.metrolist.music.db.entities.AlbumArtistMap
 import com.metrolist.music.db.entities.AlbumEntity
 import com.metrolist.music.db.entities.ArtistEntity
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.FormatEntity
+import com.metrolist.music.db.entities.ListenSignal
 import com.metrolist.music.db.entities.LyricsEntity
 import com.metrolist.music.db.entities.PlayCountEntity
 import com.metrolist.music.db.entities.PlaylistEntity
@@ -44,6 +46,7 @@ import com.metrolist.music.db.entities.SongEntity
 import com.metrolist.music.db.entities.SortedSongAlbumMap
 import com.metrolist.music.db.entities.SortedSongArtistMap
 import com.metrolist.music.db.entities.SpeedDialItem
+import com.metrolist.music.db.entities.TasteWeight
 import com.metrolist.music.extensions.toSQLiteQuery
 import timber.log.Timber
 import java.io.File
@@ -59,6 +62,9 @@ class MusicDatabase(
 ) : DatabaseDao by delegate.dao {
     val speedDialDao: SpeedDialDao
         get() = delegate.speedDialDao
+
+    val tasteDao: TasteDao
+        get() = delegate.tasteDao
 
     val openHelper: SupportSQLiteOpenHelper
         get() = delegate.openHelper
@@ -107,13 +113,15 @@ class MusicDatabase(
         RecognitionHistory::class,
         SpeedDialItem::class,
         PodcastEntity::class,
+        ListenSignal::class,
+        TasteWeight::class,
     ],
     views = [
         SortedSongArtistMap::class,
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 38,
+    version = 39,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -158,6 +166,7 @@ class MusicDatabase(
 abstract class InternalDatabase : RoomDatabase() {
     abstract val dao: DatabaseDao
     abstract val speedDialDao: SpeedDialDao
+    abstract val tasteDao: TasteDao
 
     companion object {
         const val DB_NAME = "song.db"
@@ -196,6 +205,7 @@ abstract class InternalDatabase : RoomDatabase() {
                     MIGRATION_21_24,
                     MIGRATION_22_24,
                     MIGRATION_24_25,
+                    MIGRATION_38_39,
                 ).fallbackToDestructiveMigration(false)
                 .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                 .setTransactionExecutor(
@@ -800,6 +810,23 @@ val MIGRATION_24_25 =
                 // Add the column allowing NULL values (since existing rows won't have this data)
                 db.execSQL("ALTER TABLE format ADD COLUMN perceptualLoudnessDb REAL DEFAULT NULL")
             }
+        }
+    }
+
+val MIGRATION_38_39 =
+    object : Migration(38, 39) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `listen_signal` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`songId` TEXT NOT NULL, `kind` TEXT NOT NULL, `score` REAL NOT NULL, `timestamp` INTEGER NOT NULL, " +
+                    "`listenedMs` INTEGER NOT NULL DEFAULT 0, `durationMs` INTEGER NOT NULL DEFAULT 0)",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_listen_signal_songId` ON `listen_signal` (`songId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_listen_signal_timestamp` ON `listen_signal` (`timestamp`)")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `taste_weight` (`dim` TEXT NOT NULL, `key` TEXT NOT NULL, " +
+                    "`weight` REAL NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`dim`, `key`))",
+            )
         }
     }
 

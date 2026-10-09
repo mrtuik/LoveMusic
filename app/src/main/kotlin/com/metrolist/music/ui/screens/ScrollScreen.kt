@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -73,6 +75,10 @@ import com.metrolist.music.ui.utils.resize
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.metrolist.music.taste.SignalKind
+import com.metrolist.music.taste.TasteEngine
 
 /**
  * Reels-style "Scroll" tab. It does NOT own a player: it is a vertical pager over the
@@ -94,10 +100,15 @@ fun ScrollScreen(navController: NavController) {
     var showPlaylistDialog by remember { mutableStateOf(false) }
     val (hintShown, setHintShown) = rememberPreference(ScrollSwipeHintShownKey, defaultValue = false)
 
+    val scope = rememberCoroutineScope()
+    val taste = remember(database) { TasteEngine.get(database) }
+
     if (windows.isEmpty()) {
+        // Nothing queued: build the taste-based feed (online radio-from-taste, or liked + downloaded offline).
+        LaunchedEffect(Unit) { playerConnection.service.startPersonalFeed() }
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             Text(
-                text = "Play any song, then scroll for more",
+                text = "Building your feed…",
                 color = Color.White.copy(alpha = 0.7f),
                 style = MaterialTheme.typography.bodyLarge,
             )
@@ -316,10 +327,41 @@ fun ScrollScreen(navController: NavController) {
                                 modifier = Modifier.size(30.dp),
                             )
                         }
+                        IconButton(onClick = {
+                            meta?.let { m ->
+                                scope.launch(Dispatchers.IO) { taste.recordEvent(m, SignalKind.DISLIKE) }
+                                playerConnection.player.seekToNextMediaItem()
+                            }
+                        }) {
+                            Icon(
+                                painter = painterResource(R.drawable.close),
+                                contentDescription = "Not interested",
+                                tint = Color.White,
+                                modifier = Modifier.size(26.dp),
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+
+    IconButton(
+        onClick = {
+            // Fresh batch from the latest taste data, seeded with what is playing now as a fallback.
+            playerConnection.service.startPersonalFeed(currentMeta?.id)
+        },
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))
+            .padding(end = 8.dp),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.refresh),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(26.dp),
+        )
     }
 
     AnimatedVisibility(

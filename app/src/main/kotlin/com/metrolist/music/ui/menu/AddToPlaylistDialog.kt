@@ -51,6 +51,8 @@ import com.metrolist.music.ui.component.SortHeader
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.PlaylistsViewModel
+import com.metrolist.music.taste.SignalKind
+import com.metrolist.music.taste.TasteEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
@@ -134,6 +136,9 @@ fun AddToPlaylistDialog(
             ids.map { it to null },
             prepend = addToPlaylistPosition.prepend,
         )
+        TasteEngine.get(database).let { engine ->
+            ids.forEach { runCatching { engine.recordEventById(it, SignalKind.PLAYLIST_ADD) } }
+        }
         targetPlaylist.playlist.browseId?.let { browseId ->
             syncUtils.scheduleAddToPlaylist(browseId, targetPlaylist.id, ids)
         }
