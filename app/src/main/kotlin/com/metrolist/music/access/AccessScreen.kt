@@ -13,7 +13,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +37,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -52,8 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
@@ -67,21 +65,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.music.R
+import com.metrolist.music.ui.theme.LoveMusicTheme
+import com.metrolist.music.ui.theme.SpotifyGreen
 import kotlinx.coroutines.launch
 
-private val Bg = Color(0xFF05100B)
-private val Sheet = Color(0xFF0C1A13)
-private val Field = Color(0xFF112419)
-private val Accent = Color(0xFF2EE59D)
-private val AccentDeep = Color(0xFF12805A)
-private val OnAccent = Color(0xFF03210F)
-private val TextMain = Color(0xFFE8F5EE)
-private val TextMuted = Color(0xFF8FA89B)
-private val ErrorCol = Color(0xFFFF7A7A)
 private const val TELEGRAM_URL = "https://t.me/mrtuik"
 
+/**
+ * Uses the app's own theme (flat black, white primary, Spotify green only as the "playing" accent),
+ * so it looks like part of LoveMusic and not a separate screen.
+ */
 @Composable
 fun AccessScreen(
+    prefillId: String,
+    initialMessage: String?,
+    onExit: () -> Unit,
+) {
+    LoveMusicTheme {
+        AccessContent(prefillId, initialMessage, onExit)
+    }
+}
+
+@Composable
+private fun AccessContent(
     prefillId: String,
     initialMessage: String?,
     onExit: () -> Unit,
@@ -96,6 +102,7 @@ fun AccessScreen(
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val cs = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) { sheetIn = true }
 
@@ -109,29 +116,12 @@ fun AccessScreen(
         }
     }
 
-    fun openTelegram() {
-        runCatching { uriHandler.openUri(TELEGRAM_URL) }
-    }
-
     Box(
         Modifier
             .fillMaxSize()
-            .background(Bg)
+            .background(cs.background)
             .imePadding(),
     ) {
-        // Soft green glow behind the hero
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.6f)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(Accent.copy(alpha = 0.22f), Color.Transparent),
-                        radius = 900f,
-                    ),
-                ),
-        )
-
         Column(Modifier.fillMaxSize()) {
             // ---------------- HERO ----------------
             Column(
@@ -143,86 +133,64 @@ fun AccessScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Box(
-                    Modifier
-                        .size(92.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(AccentDeep, Accent)))
-                        .border(1.dp, Accent.copy(alpha = 0.6f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.small_icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(OnAccent),
-                        modifier = Modifier.size(52.dp),
-                    )
-                }
-                Spacer(Modifier.height(18.dp))
+                Image(
+                    painter = painterResource(R.drawable.small_icon),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(cs.onBackground),
+                    modifier = Modifier.size(if (keyboardOpen) 48.dp else 76.dp),
+                )
+                Spacer(Modifier.height(16.dp))
                 Text(
-                    "LOVEMUSIC",
-                    color = TextMain,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 6.sp,
+                    "LoveMusic",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = cs.onBackground,
                 )
                 if (!keyboardOpen) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Your music. Your vibe.",
-                        color = TextMuted,
-                        fontSize = 14.sp,
+                        "Music for everyone you love.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = cs.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(22.dp))
+                    Spacer(Modifier.height(24.dp))
                     Equalizer()
-                    Spacer(Modifier.height(22.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FeatureChip("Stream")
-                        FeatureChip("Lyrics")
-                        FeatureChip("Offline")
-                    }
                 }
             }
 
             // ---------------- BOTTOM SHEET (cannot be dismissed) ----------------
             AnimatedVisibility(
                 visible = sheetIn,
-                enter = slideInVertically(tween(450)) { it } + fadeIn(tween(450)),
+                enter = slideInVertically(tween(400)) { it } + fadeIn(tween(400)),
             ) {
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                        .background(Sheet)
-                        .border(
-                            BorderStroke(1.dp, Accent.copy(alpha = 0.18f)),
-                            RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-                        )
+                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                        .background(cs.surfaceContainer)
                         .navigationBarsPadding()
-                        .padding(horizontal = 24.dp, vertical = 14.dp),
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Box(
                         Modifier
-                            .width(42.dp)
+                            .width(36.dp)
                             .height(4.dp)
                             .clip(CircleShape)
-                            .background(TextMuted.copy(alpha = 0.4f)),
+                            .background(cs.outline.copy(alpha = 0.6f)),
                     )
                     Spacer(Modifier.height(18.dp))
                     Text(
                         "Enter your Access ID",
-                        color = TextMain,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = cs.onSurface,
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "One-time activation on this device",
-                        color = TextMuted,
-                        fontSize = 13.sp,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = cs.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(16.dp))
                     OutlinedTextField(
                         value = id,
                         onValueChange = { id = it.uppercase().filter { c -> !c.isWhitespace() } },
@@ -233,32 +201,32 @@ fun AccessScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center,
                                 fontFamily = FontFamily.Monospace,
-                                letterSpacing = 2.sp,
+                                letterSpacing = 1.5.sp,
                             )
                         },
                         textStyle = TextStyle(
-                            color = TextMain,
-                            fontSize = 18.sp,
+                            color = cs.onSurface,
+                            fontSize = 17.sp,
                             fontFamily = FontFamily.Monospace,
-                            letterSpacing = 2.sp,
+                            letterSpacing = 1.5.sp,
                             textAlign = TextAlign.Center,
                         ),
                         isError = error != null,
                         enabled = !loading,
-                        shape = RoundedCornerShape(16.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Field,
-                            unfocusedContainerColor = Field,
-                            disabledContainerColor = Field,
-                            errorContainerColor = Field,
-                            focusedBorderColor = Accent,
-                            unfocusedBorderColor = Accent.copy(alpha = 0.25f),
-                            errorBorderColor = ErrorCol,
-                            cursorColor = Accent,
-                            focusedTextColor = TextMain,
-                            unfocusedTextColor = TextMain,
-                            focusedPlaceholderColor = TextMuted.copy(alpha = 0.6f),
-                            unfocusedPlaceholderColor = TextMuted.copy(alpha = 0.6f),
+                            focusedContainerColor = cs.surfaceContainerHighest,
+                            unfocusedContainerColor = cs.surfaceContainerHighest,
+                            disabledContainerColor = cs.surfaceContainerHighest,
+                            errorContainerColor = cs.surfaceContainerHighest,
+                            focusedBorderColor = cs.onSurface,
+                            unfocusedBorderColor = cs.surfaceContainerHighest,
+                            errorBorderColor = cs.error,
+                            cursorColor = SpotifyGreen,
+                            focusedTextColor = cs.onSurface,
+                            unfocusedTextColor = cs.onSurface,
+                            focusedPlaceholderColor = cs.onSurfaceVariant.copy(alpha = 0.6f),
+                            unfocusedPlaceholderColor = cs.onSurfaceVariant.copy(alpha = 0.6f),
                         ),
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Characters,
@@ -271,8 +239,8 @@ fun AccessScreen(
                         Spacer(Modifier.height(8.dp))
                         Text(
                             error!!,
-                            color = ErrorCol,
-                            fontSize = 13.sp,
+                            color = cs.error,
+                            style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                         )
                     }
@@ -280,52 +248,39 @@ fun AccessScreen(
                     Button(
                         onClick = { submit() },
                         enabled = !loading && id.isNotBlank(),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Accent,
-                            contentColor = OnAccent,
-                            disabledContainerColor = Accent.copy(alpha = 0.18f),
-                            disabledContentColor = TextMuted,
+                            containerColor = cs.primary,
+                            contentColor = cs.onPrimary,
+                            disabledContainerColor = cs.surfaceContainerHighest,
+                            disabledContentColor = cs.onSurfaceVariant,
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(54.dp),
+                            .height(50.dp),
                     ) {
                         if (loading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(22.dp),
                                 strokeWidth = 2.5.dp,
-                                color = OnAccent,
+                                color = cs.onPrimary,
                             )
                         } else {
-                            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text("Continue", style = MaterialTheme.typography.titleMedium)
                         }
                     }
 
-                    Spacer(Modifier.height(18.dp))
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(Modifier.weight(1f).height(1.dp).background(TextMuted.copy(alpha = 0.2f)))
-                        Text(
-                            "  Need an ID?  ",
-                            color = TextMuted,
-                            fontSize = 12.sp,
-                        )
-                        Box(Modifier.weight(1f).height(1.dp).background(TextMuted.copy(alpha = 0.2f)))
-                    }
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(12.dp))
                     OutlinedButton(
-                        onClick = { openTelegram() },
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Accent.copy(alpha = 0.5f)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Accent),
+                        onClick = { runCatching { uriHandler.openUri(TELEGRAM_URL) } },
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.dp, cs.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.onSurface),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
+                            .height(46.dp),
                     ) {
-                        Text("Message @mrtuik on Telegram", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Need an ID? Message @mrtuik on Telegram", style = MaterialTheme.typography.labelLarge)
                     }
                     Spacer(Modifier.height(6.dp))
                 }
@@ -334,26 +289,13 @@ fun AccessScreen(
     }
 }
 
-@Composable
-private fun FeatureChip(label: String) {
-    Box(
-        Modifier
-            .clip(RoundedCornerShape(50))
-            .background(Accent.copy(alpha = 0.10f))
-            .border(1.dp, Accent.copy(alpha = 0.30f), RoundedCornerShape(50))
-            .padding(horizontal = 14.dp, vertical = 6.dp),
-    ) {
-        Text(label, color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-/** Small animated equalizer used as the hero visual. */
+/** The same kind of green "now playing" bars the player uses, as a small hero visual. */
 @Composable
 private fun Equalizer() {
     val transition = rememberInfiniteTransition(label = "eq")
-    val durations = listOf(620, 840, 540, 960, 720, 480, 900, 660, 800, 560, 940, 700)
+    val durations = listOf(620, 840, 540, 960, 720, 480, 900)
     Row(
-        Modifier.height(44.dp),
+        Modifier.height(32.dp),
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
@@ -364,16 +306,16 @@ private fun Equalizer() {
                 animationSpec = infiniteRepeatable(
                     animation = tween(d),
                     repeatMode = RepeatMode.Reverse,
-                    initialStartOffset = StartOffset(i * 70),
+                    initialStartOffset = StartOffset(i * 80),
                 ),
                 label = "bar$i",
             )
             Box(
                 Modifier
-                    .width(5.dp)
+                    .width(4.dp)
                     .fillMaxHeight(h)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(Brush.verticalGradient(listOf(Accent, AccentDeep))),
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(SpotifyGreen),
             )
         }
     }

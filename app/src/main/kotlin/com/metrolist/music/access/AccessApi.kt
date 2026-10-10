@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 sealed class AccessResult {
     data class Ok(val name: String, val expiresAt: Long) : AccessResult()
     data class Denied(val reason: String, val expiresAt: Long = 0L) : AccessResult()
-    object NetworkError : AccessResult()
+    data class NetworkError(val detail: String = "") : AccessResult()
 }
 
 object AccessApi {
@@ -67,17 +67,17 @@ object AccessApi {
                 .build()
             client.newCall(req).execute().use { resp ->
                 val text = resp.body?.string().orEmpty()
-                val json = try { JSONObject(text) } catch (e: Exception) { return@use AccessResult.NetworkError }
+                val json = try { JSONObject(text) } catch (e: Exception) { return@use AccessResult.NetworkError("bad response ${resp.code}") }
                 if (json.optBoolean("ok", false)) {
                     AccessResult.Ok(json.optString("name", ""), json.optLong("expiresAt", 0L))
                 } else {
                     val reason = json.optString("reason", "server_error")
-                    if (reason == "server_error") AccessResult.NetworkError
+                    if (reason == "server_error") AccessResult.NetworkError("server_error")
                     else AccessResult.Denied(reason, json.optLong("expiresAt", 0L))
                 }
             }
         } catch (e: Exception) {
-            AccessResult.NetworkError
+            AccessResult.NetworkError(e.javaClass.simpleName)
         }
     }
 }

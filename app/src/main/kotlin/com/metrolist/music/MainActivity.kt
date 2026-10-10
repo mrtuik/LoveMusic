@@ -478,7 +478,7 @@ class MainActivity : FragmentActivity() {
                     androidx.compose.foundation.layout.Box(
                         androidx.compose.ui.Modifier
                             .fillMaxSize()
-                            .background(androidx.compose.ui.graphics.Color(0xFF05100B)),
+                            .background(androidx.compose.ui.graphics.Color(0xFF000000)),
                     )
                 is com.metrolist.music.access.GateState.Locked ->
                     com.metrolist.music.access.AccessScreen(

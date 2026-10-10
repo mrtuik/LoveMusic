@@ -92,7 +92,7 @@ object AccessGate {
                 null
             }
             is AccessResult.Denied -> messageFor(r.reason)
-            AccessResult.NetworkError -> messageFor("network")
+            is AccessResult.NetworkError -> messageFor("network") + if (r.detail.isNotBlank()) " (${r.detail})" else ""
         }
     }
 
@@ -119,6 +119,7 @@ object AccessGate {
         "device_limit" -> "This ID is already used on 2 devices"
         "device_removed" -> "This device was removed from your ID. Enter your ID again"
         "expired" -> "This ID has expired"
+        "unauthorized" -> "App key mismatch, contact @mrtuik"
         "too_many_attempts" -> "Too many attempts, try again in 10 minutes"
         "offline_grace" -> "Connect to internet to verify"
         else -> "No internet / server problem, try again"
@@ -163,7 +164,7 @@ object AccessGate {
                     else -> Unit
                 }
             }
-            AccessResult.NetworkError -> {
+            is AccessResult.NetworkError -> {
                 store.setPending(pendingSeconds)
                 if (lastVerifiedAt > 0 &&
                     System.currentTimeMillis() - lastVerifiedAt > AccessConfig.OFFLINE_GRACE_MS
