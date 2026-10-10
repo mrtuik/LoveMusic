@@ -7,7 +7,8 @@ import com.metrolist.music.taste.FeedBuilder
 
 /**
  * Endless taste-based queue for the Scroll feed. [MusicService] refills non-radio queues when
- * <= 5 songs remain, so every refill re-reads the latest taste data and builds a fresh batch.
+ * few songs remain, so every refill re-reads the latest taste data and builds a fresh batch.
+ * It never reports "no more": [FeedBuilder] relaxes its filters step by step instead of giving up.
  */
 class PersonalFeedQueue(
     private val context: Context,
@@ -19,6 +20,15 @@ class PersonalFeedQueue(
 
     private val served = HashSet<String>()
 
+    /** Songs currently in the player queue (set by MusicService before each refill). */
+    @Volatile var queuedIds: Set<String> = emptySet()
+
+    /** Songs already played this session (set by MusicService before each refill). */
+    @Volatile var playedIds: Set<String> = emptySet()
+
+    /** Last queued song: its radio continues the current vibe. */
+    @Volatile var seedHint: String? = null
+
     override suspend fun getInitialStatus(): Queue.Status {
         val items = fetch()
         return Queue.Status(title = null, items = items, mediaItemIndex = 0)
@@ -29,7 +39,14 @@ class PersonalFeedQueue(
     override suspend fun nextPage(): List<MediaItem> = fetch()
 
     private suspend fun fetch(): List<MediaItem> {
-        val items = builder.nextBatch(context, batchSize, served, fallbackSeedId)
+        val items = builder.nextBatch(
+            context = context,
+            size = batchSize,
+            served = HashSet(served),
+            queued = queuedIds,
+            played = playedIds,
+            fallbackSeedId = seedHint ?: fallbackSeedId,
+        )
         items.forEach { served.add(it.mediaId) }
         return items
     }

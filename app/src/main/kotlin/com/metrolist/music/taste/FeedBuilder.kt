@@ -29,21 +29,43 @@ class FeedBuilder(private val engine: TasteEngine) {
 
     private var trendingCache: Pair<Long, List<SongItem>>? = null
 
+    /**
+     * Never-ending batch. Tries the strict filters first and relaxes step by step so a batch is
+     * (almost) always found:
+     *  1. taste filters + served + queued + played
+     *  2. only dislikes + served + queued + played
+     *  3. only dislikes + queued           (played songs may come back, old ones first)
+     *  4. offline liked/downloaded, not queued
+     *  5. offline liked/downloaded, anything
+     */
     suspend fun nextBatch(
         context: Context,
         size: Int,
-        exclude: Set<String>,
+        served: Set<String>,
+        queued: Set<String>,
+        played: Set<String>,
         fallbackSeedId: String? = null,
     ): List<MediaItem> = withContext(Dispatchers.IO) {
-        val blocked = engine.blockedIds() + exclude
         val online = isOnline(context)
-        val batch = if (online) onlineBatch(size, blocked, fallbackSeedId) else emptyList()
-        val result = batch.ifEmpty { offlineBatch(size, blocked, exclude) }
-        result.map { it.asMediaItem() }
+        val strict = engine.blockedIds() + served + queued + played
+        val disliked = engine.dislikedOnlyIds()
+        val seeds = (listOfNotNull(fallbackSeedId) + engine.seedSongIds()).distinct().take(5)
+
+        var batch: List<Candidate> = emptyList()
+        if (online) {
+            batch = onlineBatch(size, strict, seeds)
+            if (batch.isEmpty()) batch = onlineBatch(size, disliked + served + queued + played, seeds)
+            if (batch.isEmpty()) batch = onlineBatch(size, disliked + queued, seeds)
+        }
+        if (batch.isEmpty()) batch = offlineBatch(size, strict)
+        if (batch.isEmpty()) batch = offlineBatch(size, disliked + served + queued + played)
+        if (batch.isEmpty()) batch = offlineBatch(size, disliked + queued)
+        if (batch.isEmpty()) batch = offlineBatch(size, emptySet())
+        batch.map { it.asMediaItem() }
     }
 
-    private suspend fun onlineBatch(size: Int, blocked: Set<String>, fallbackSeedId: String?): List<Candidate> = coroutineScope {
-        val seeds = engine.seedSongIds().ifEmpty { listOfNotNull(fallbackSeedId) }
+    private suspend fun onlineBatch(size: Int, blocked: Set<String>, seeds: List<String>): List<Candidate> = coroutineScope {
+        if (seeds.isEmpty()) return@coroutineScope emptyList()
         val radios = seeds.map { seed ->
             async { runCatching { YouTube.next(WatchEndpoint(videoId = seed, playlistId = "RDAMVM$seed")).getOrNull()?.items.orEmpty() }.getOrDefault(emptyList()) }
         }
@@ -54,10 +76,8 @@ class FeedBuilder(private val engine: TasteEngine) {
         mix(radio.map { Candidate(it, null, featuresOf(it)) }, trendingItems.map { Candidate(it, null, featuresOf(it)) }, size)
     }
 
-    private suspend fun offlineBatch(size: Int, blocked: Set<String>, hardExclude: Set<String>): List<Candidate> {
-        var pool = engine.offlineCandidates().filter { it.id !in blocked }
-        // Everything was recently heard: relax to "just not already queued / disliked".
-        if (pool.isEmpty()) pool = engine.offlineCandidates().filter { it.id !in hardExclude }
+    private suspend fun offlineBatch(size: Int, blocked: Set<String>): List<Candidate> {
+        val pool = engine.offlineCandidates().filter { it.id !in blocked }
         return mix(pool.map { Candidate(null, it, TasteEngine.featuresOf(it)) }, emptyList(), size)
     }
 
@@ -87,7 +107,11 @@ class FeedBuilder(private val engine: TasteEngine) {
             taste += rest
             missing -= rest.size
         }
-        return interleave(taste, explore, trend)
+        val result = interleave(taste, explore, trend)
+        if (result.isEmpty() && (pool.isNotEmpty() || trending.isNotEmpty())) {
+            return (pool + trending).shuffled().take(size)
+        }
+        return result
     }
 
     /** Spreads explore/trending picks through the batch instead of clumping them at the end. */

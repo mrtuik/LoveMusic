@@ -239,7 +239,16 @@ class TasteEngine private constructor(private val database: MusicDatabase) {
     }
 
     /** Last 2-4 songs the user liked / listened to fully, newest first. */
-    suspend fun seedSongIds(): List<String> = dao.recentPositiveSongIds(0.8, 4)
+    suspend fun seedSongIds(): List<String> {
+        // Latest positive song always seeds; the rest are random picks from a bigger recent pool,
+        // so every batch explores a different corner of the user's taste (no same-4-seeds loop).
+        val pool = dao.recentPositiveSongIds(0.8, 30)
+        if (pool.size <= 4) return pool
+        return listOf(pool.first()) + pool.drop(1).shuffled().take(3)
+    }
+
+    /** Only songs the user explicitly disliked. Used when the normal block list leaves nothing. */
+    suspend fun dislikedOnlyIds(): Set<String> = dao.dislikedSongIds().toSet()
 
     /** Songs that must not show up again: disliked forever, skipped in 14d, heard in 3d. */
     suspend fun blockedIds(): Set<String> {

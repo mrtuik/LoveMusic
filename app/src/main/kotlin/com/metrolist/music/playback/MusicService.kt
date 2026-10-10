@@ -1866,8 +1866,9 @@ class MusicService :
         val queue = currentQueue
         val radioQueue = queue as? YouTubeQueue
         val isRadio = radioQueue?.isRadio == true
+        val feedQueue = queue as? PersonalFeedQueue
         val needsMore =
-            if (isRadio) {
+            if (isRadio || feedQueue != null) {
                 RadioFilter.needsMore(player.mediaItemCount, player.currentMediaItemIndex)
             } else {
                 player.mediaItemCount - player.currentMediaItemIndex <= 5
@@ -1881,6 +1882,12 @@ class MusicService :
         for (i in 0 until player.mediaItemCount) exclude.add(player.getMediaItemAt(i).mediaId)
         val lastItem = player.getMediaItemAt(player.mediaItemCount - 1)
         val lastMetadata = lastItem.metadata
+        if (feedQueue != null) {
+            // The feed must never repeat what is queued / already played, and should follow the last song's vibe.
+            feedQueue.queuedIds = (0 until player.mediaItemCount).mapTo(HashSet()) { player.getMediaItemAt(it).mediaId }
+            feedQueue.playedIds = HashSet(playedIds)
+            feedQueue.seedHint = lastItem.mediaId
+        }
 
         radioRefillJob =
             scope.launch(SilentHandler) {
@@ -1898,7 +1905,7 @@ class MusicService :
                                 .filterVideoSongs(cachedHideVideoSongs)
                     }
                     // No continuation left: new radio from the last queued song.
-                    if (newItems.isEmpty() && isRadio && lastMetadata != null) {
+                    if (newItems.isEmpty() && (isRadio || feedQueue != null) && lastMetadata != null) {
                         val refill = YouTubeQueue.radio(lastMetadata)
                         refill.excludeIds = exclude
                         val status =
@@ -1910,7 +1917,7 @@ class MusicService :
                         if (newItems.isNotEmpty()) {
                             withContext(Dispatchers.Main) {
                                 // Keep following this radio (its continuation) from now on.
-                                if (currentQueue === queue) currentQueue = refill
+                                if (isRadio && currentQueue === queue) currentQueue = refill
                             }
                         }
                     }
@@ -1937,6 +1944,8 @@ class MusicService :
         if (currentQueue is PersonalFeedQueue) return
         val current = player.currentMediaItem ?: return
         val queue = PersonalFeedQueue(this, FeedBuilder(TasteEngine.get(database)), current.mediaId)
+        queue.playedIds = HashSet(playedIds)
+        queue.queuedIds = (0 until player.mediaItemCount).mapTo(HashSet()) { player.getMediaItemAt(it).mediaId }
         scope.launch(SilentHandler) {
             val items =
                 withContext(Dispatchers.IO) {
