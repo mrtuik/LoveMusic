@@ -104,6 +104,7 @@ fun AccountSettings(
     var showToken by remember { mutableStateOf(false) }
     var showTokenEditor by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showAccessLogout by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Column(
@@ -251,6 +252,66 @@ fun AccountSettings(
                 }
             )
         }
+
+        // LoveMusic Access ID (shown above the account login)
+        if (showAccessLogout) {
+            DefaultDialog(
+                onDismiss = { showAccessLogout = false },
+                title = { Text("Log out of Access ID?") },
+                content = {
+                    Text(
+                        text = "You will need to enter your Access ID again to use LoveMusic.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(horizontal = 18.dp)
+                    )
+                },
+                buttons = {
+                    TextButton(onClick = { showAccessLogout = false }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                    TextButton(
+                        onClick = {
+                            showAccessLogout = false
+                            onClose()
+                            com.metrolist.music.access.AccessGate.logout()
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_logout))
+                    }
+                }
+            )
+        }
+
+        val accessExpiry = com.metrolist.music.access.AccessGate.currentExpiry()
+        val accessDesc = if (accessExpiry > 0L) {
+            val daysLeft = ((accessExpiry - System.currentTimeMillis()) / 86_400_000L).coerceAtLeast(0L)
+            "${com.metrolist.music.access.AccessGate.maskedId()}  -  $daysLeft days left"
+        } else {
+            com.metrolist.music.access.AccessGate.maskedId() + "  -  Lifetime"
+        }
+        Material3SettingsGroup(
+            items = listOf(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.key),
+                    title = { Text("Access ID") },
+                    description = { Text(accessDesc) },
+                    trailingContent = {
+                        OutlinedButton(
+                            onClick = { showAccessLogout = true },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
+                            Text(stringResource(R.string.action_logout))
+                        }
+                    }
+                )
+            ),
+            useLowContrast = true
+        )
+
+        Spacer(Modifier.height(8.dp))
 
         Material3SettingsGroup(
             items = listOfNotNull(
