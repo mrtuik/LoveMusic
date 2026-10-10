@@ -635,6 +635,16 @@ class MusicService :
 
         playerInitialized.value = false
 
+        // Access gate: stop playback as soon as access is revoked
+        scope.launch {
+            com.metrolist.music.access.AccessGate.state.collect { g ->
+                if (g !is com.metrolist.music.access.GateState.Open && ::player.isInitialized) {
+                    player.pause()
+                    com.metrolist.music.access.AccessGate.playing = false
+                }
+            }
+        }
+
         // Call startForeground() as early as possible to satisfy the
         // 5-second timeout imposed by Context.startForegroundService().
         // On some OEMs (e.g. MIUI), even a DataStore read can be slow
@@ -2797,6 +2807,12 @@ class MusicService :
         playWhenReady: Boolean,
         reason: Int,
     ) {
+        // Access gate: never play for unapproved users
+        if (playWhenReady && !com.metrolist.music.access.AccessGate.isOpen) {
+            player.pause()
+            return
+        }
+
         // Safety net: if local player tries to start while casting, immediately pause it
         if (playWhenReady && castConnectionHandler?.isCasting?.value == true) {
             player.pause()
@@ -2900,6 +2916,7 @@ class MusicService :
         }
 
         if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
+            com.metrolist.music.access.AccessGate.playing = player.isPlaying
             updateWidgetUI(player.isPlaying)
             if (player.isPlaying) {
                 discordIntentionalDisconnect = false

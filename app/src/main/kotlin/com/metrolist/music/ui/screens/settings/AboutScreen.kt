@@ -103,24 +103,24 @@ private data class CommunityLink(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private val leadDeveloper = Contributor(
-    name = "Mo Agamy",
+    name = "Mr. Tuik",
     roleRes = R.string.credits_lead_developer,
-    githubHandle = "mostafaalagamy",
+    githubHandle = "mrtuik",
     polygon = MaterialShapes.Cookie9Sided,
-    favoriteSongVideoId = "Mh2JWGWvy_Y"
 )
 
+/** Original Metrolist project (LoveMusic is a modified fork of it, GPL-3.0). */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val collaborators = listOf(
+private val originalTeam = listOf(
+    Contributor(name = "Mo Agamy", roleRes = R.string.credits_lead_developer, githubHandle = "mostafaalagamy", sponsorUrl = "https://buymeacoffee.com/mostafaalagamy", polygon = MaterialShapes.Cookie9Sided, favoriteSongVideoId = "Mh2JWGWvy_Y"),
     Contributor(name = "Adriel O'Connel", roleRes = R.string.credits_collaborator, githubHandle = "adrielGGmotion", sponsorUrl = "https://github.com/sponsors/adrielGGmotion", polygon = MaterialShapes.Cookie4Sided, favoriteSongVideoId = "m2zUrruKjDQ"),
     Contributor(name = "Nyx", roleRes = R.string.credits_collaborator, githubHandle = "nyxiereal", sponsorUrl = "https://github.com/sponsors/nyxiereal", polygon = MaterialShapes.Cookie12Sided, favoriteSongVideoId = "zselaN6zPXw"),
 )
 
 private val communityLinks = listOf(
-    CommunityLink(R.string.credits_discord, R.drawable.discord, "https://discord.com/invite/zrdbeRG2Mt"),
-    CommunityLink(R.string.credits_telegram, R.drawable.telegram, "https://t.me/metrolistapp"),
-    CommunityLink(R.string.credits_view_repo, R.drawable.github, "https://github.com/MetrolistGroup/Metrolist"),
-    CommunityLink(R.string.credits_license_name, R.drawable.info, "https://github.com/MetrolistGroup/Metrolist/blob/main/LICENSE")
+    CommunityLink(R.string.credits_view_repo, R.drawable.github, "https://github.com/mrtuik/LoveMusic"),
+    CommunityLink(R.string.credits_license_name, R.drawable.info, "https://github.com/mrtuik/LoveMusic/blob/main/LICENSE"),
+    CommunityLink(R.string.credits_original_project, R.drawable.github, "https://github.com/MetrolistGroup/Metrolist"),
 )
 
 private fun handleEasterEggClick(
@@ -186,28 +186,13 @@ private fun ContributorAvatar(
 private fun DeveloperSocials(
     uriHandler: androidx.compose.ui.platform.UriHandler
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    FilledTonalButton(
+        onClick = { uriHandler.openUri("https://github.com/mrtuik") },
+        modifier = Modifier.fillMaxWidth().height(48.dp)
     ) {
-        FilledTonalButton(
-            onClick = { uriHandler.openUri("https://metrolist.cc") },
-            modifier = Modifier.weight(1f).height(48.dp)
-        ) {
-            Icon(painterResource(R.drawable.language), contentDescription = null)
-        }
-        FilledTonalButton(
-            onClick = { uriHandler.openUri("https://github.com/mostafaalagamy") },
-            modifier = Modifier.weight(1f).height(48.dp)
-        ) {
-            Icon(painterResource(R.drawable.github), contentDescription = null)
-        }
-        FilledTonalButton(
-            onClick = { uriHandler.openUri("https://www.instagram.com/mostafaalagamy") },
-            modifier = Modifier.weight(1f).height(48.dp)
-        ) {
-            Icon(painterResource(R.drawable.instagram), contentDescription = null)
-        }
+        Icon(painterResource(R.drawable.github), contentDescription = null)
+        Spacer(Modifier.width(12.dp))
+        Text("GitHub", fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -254,7 +239,7 @@ fun AboutScreen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.small_icon),
-                    contentDescription = stringResource(R.string.metrolist),
+                    contentDescription = stringResource(R.string.app_name),
                     colorFilter = ColorFilter.tint(
                         color = MaterialTheme.colorScheme.primary,
                         blendMode = BlendMode.SrcIn,
@@ -265,9 +250,7 @@ fun AboutScreen(
                 Spacer(Modifier.width(20.dp))
         
                 Column {
-                    val metrolistName = stringResource(R.string.metrolist)
-                        .lowercase(Locale.getDefault())
-                        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                    val metrolistName = stringResource(R.string.app_name)
 
                     Text(
                         text = metrolistName,
@@ -387,21 +370,6 @@ fun AboutScreen(
                 
                 DeveloperSocials(uriHandler)
                 
-                Spacer(Modifier.height(16.dp))
-                
-                Button(
-                    onClick = { uriHandler.openUri("https://buymeacoffee.com/mostafaalagamy") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Icon(painterResource(R.drawable.buymeacoffee), contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Text(stringResource(R.string.buy_mo_a_coffee), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-                }
             }
         }
 
@@ -409,8 +377,8 @@ fun AboutScreen(
         
         // Collaborators section - back to Material3SettingsGroup
         Material3SettingsGroup(
-            title = stringResource(R.string.credits_collaborators_section),
-            items = collaborators.map { contributor ->
+            title = "Based on Metrolist (original team)",
+            items = originalTeam.map { contributor ->
                 Material3SettingsItem(
                     leadingContent = {
                         var clickCount by remember(contributor.name) { mutableIntStateOf(0) }

@@ -39,7 +39,7 @@ object Updater {
     private var cachedAllReleases: List<ReleaseInfo> = emptyList()
     
     private const val CHECK_INTERVAL_MILLIS = 2 * 60 * 60 * 1000L // 2 hours
-    private const val GITHUB_API_BASE = "https://api.github.com/repos/MetrolistGroup/Metrolist"
+    private const val GITHUB_API_BASE = "https://api.github.com/repos/mrtuik/LoveMusic"
     private const val KMP_LATEST_RELEASE_URL = "https://api.github.com/repos/MetrolistGroup/Metrolist-KMP/releases/latest"
     private const val KMP_APK_NAME = "Metrolist.apk"
 
@@ -209,11 +209,8 @@ object Updater {
      * Returns the latest stable KMP release when it includes an Android APK.
      */
     suspend fun getLatestKmpRelease(): Result<ReleaseInfo?> =
-        withContext(Dispatchers.IO) {
-            runCatching {
-                parseKmpRelease(client.get(KMP_LATEST_RELEASE_URL).bodyAsText())
-            }
-        }
+        // LoveMusic is its own fork: never offer the upstream Metrolist KMP app as an "upgrade".
+        Result.success(null)
 
     /**
      * Get the download URL for the correct app variant

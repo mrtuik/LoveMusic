@@ -62,6 +62,14 @@ android {
         buildConfigField("String", "LASTFM_SECRET", "\"$lastFmSecret\"")
         buildConfigField("String", "ARCHITECTURE", "\"universal\"")
         buildConfigField("Long", "DISCORD_APP_ID", "1447278780795064401L")
+
+        // Access gate backend (Google Apps Script). Override via local.properties or env vars.
+        val accessUrl = (localProperties.getProperty("ACCESS_SCRIPT_URL") ?: System.getenv("ACCESS_SCRIPT_URL"))?.takeIf { it.isNotBlank() }
+            ?: "https://script.google.com/macros/s/AKfycbzyMU2vpHix5RJ6-FOYv9AbTIt7Tfv1XUhCsKIb46wguxCPosBp0F_SlBuq4c-WPhuOQQ/exec"
+        val accessKey = (localProperties.getProperty("ACCESS_APP_KEY") ?: System.getenv("ACCESS_APP_KEY"))?.takeIf { it.isNotBlank() }
+            ?: "CHANGE_ME_APP_KEY"
+        buildConfigField("String", "ACCESS_SCRIPT_URL", "\"$accessUrl\"")
+        buildConfigField("String", "ACCESS_APP_KEY", "\"$accessKey\"")
     }
 
     flavorDimensions += listOf("variant")

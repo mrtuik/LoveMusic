@@ -244,6 +244,27 @@ fun PrivacySettings(
                 )
             )
         )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        val accessExpiry = com.metrolist.music.access.AccessGate.currentExpiry()
+        val accessDesc = if (accessExpiry > 0L) {
+            val daysLeft = ((accessExpiry - System.currentTimeMillis()) / 86_400_000L).coerceAtLeast(0L)
+            "${com.metrolist.music.access.AccessGate.maskedId()}  -  $daysLeft days left"
+        } else {
+            com.metrolist.music.access.AccessGate.maskedId()
+        }
+        Material3SettingsGroup(
+            title = "Access",
+            items = listOf(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.logout),
+                    title = { Text("Log out") },
+                    description = { Text(accessDesc) },
+                    onClick = { com.metrolist.music.access.AccessGate.logout() }
+                )
+            )
+        )
         Spacer(modifier = Modifier.height(16.dp))
     }
 

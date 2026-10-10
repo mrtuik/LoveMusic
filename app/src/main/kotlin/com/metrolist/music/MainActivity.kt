@@ -314,6 +314,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        com.metrolist.music.access.AccessGate.foreground = true
         // Request notification permission on Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -356,6 +357,7 @@ class MainActivity : FragmentActivity() {
         // the Activity is backgrounded. The MusicService is a foreground service and keeps
         // running, so the host must keep reporting playback state to the LT server; detaching
         // the player listener here used to break LT for any host that wasn't staring at the
+        com.metrolist.music.access.AccessGate.foreground = false
         // app the whole session. Full teardown happens in onDestroy() via safeUnbindService().
         super.onStop()
     }
@@ -470,14 +472,30 @@ class MainActivity : FragmentActivity() {
         }
 
         setContent {
-            MetrolistApp(
-                latestVersionName = latestVersionName,
-                onLatestVersionNameChange = { latestVersionName = it },
-                playerConnection = playerConnectionSnapshot,
-                database = database,
-                downloadUtil = downloadUtil,
-                syncUtils = syncUtils,
-            )
+            val gate by com.metrolist.music.access.AccessGate.state.collectAsStateWithLifecycle()
+            when (val g = gate) {
+                is com.metrolist.music.access.GateState.Loading ->
+                    androidx.compose.foundation.layout.Box(
+                        androidx.compose.ui.Modifier
+                            .fillMaxSize()
+                            .background(androidx.compose.ui.graphics.Color(0xFF0E0E10)),
+                    )
+                is com.metrolist.music.access.GateState.Locked ->
+                    com.metrolist.music.access.AccessScreen(
+                        prefillId = g.prefillId,
+                        initialMessage = g.message,
+                        onExit = { finishAffinity() },
+                    )
+                is com.metrolist.music.access.GateState.Open ->
+                    MetrolistApp(
+                        latestVersionName = latestVersionName,
+                        onLatestVersionNameChange = { latestVersionName = it },
+                        playerConnection = playerConnectionSnapshot,
+                        database = database,
+                        downloadUtil = downloadUtil,
+                        syncUtils = syncUtils,
+                    )
+            }
         }
     }
 

@@ -60,6 +60,7 @@ jobs:
           METROLIST_APPLICATION_ID: com.lovemusic.app
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+          ACCESS_APP_KEY: ${{ secrets.ACCESS_APP_KEY }}
 
       - name: Collect APKs
         run: |

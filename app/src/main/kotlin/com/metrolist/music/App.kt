@@ -75,6 +75,7 @@ class App :
 
         // Install crash handler first
         CrashHandler.install(this)
+        com.metrolist.music.access.AccessGate.init(this)
         ArtistNameAliases.initialize(this)
 
         // preferencesDataStore uses filesDir/datastore; proactive mkdir reduces failures on odd ROM states

@@ -3,4 +3,5 @@
     <string name="app_name">LoveMusic</string>
     <string name="app_name_display" translatable="false">Love Music</string>
     <string name="scroll">Scroll</string>
+    <string name="credits_original_project" translatable="false">Original project: Metrolist (GPL-3.0)</string>
 </resources>
